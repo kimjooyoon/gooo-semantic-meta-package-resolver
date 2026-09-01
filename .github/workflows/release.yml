@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      IMMUTABLE_RELEASE_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN }}
     steps:
       - name: Check out tagged revision
         uses: actions/checkout@v4
@@ -26,7 +27,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases" > "$RUNNER_TEMP/immutable.json"
+          test -n "$IMMUTABLE_RELEASE_TOKEN"
+          GH_TOKEN="$IMMUTABLE_RELEASE_TOKEN" gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases" > "$RUNNER_TEMP/immutable.json"
           jq -e '.enabled == true' "$RUNNER_TEMP/immutable.json" >/dev/null
       - name: Verify tag identity and refuse replacement
         shell: bash
