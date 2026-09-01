@@ -30,7 +30,7 @@ type resolveState struct {
 
 func ValidateContract(contract Source) error {
 	if !strings.HasPrefix(contract.Schema, "gooo/contract/semantic_meta_package_resolver/") || !strings.HasSuffix(contract.Schema, "/v1") || contract.Kind != "contract" || contract.Name != "semantic_meta_package_resolver" || contract.LanguageVersion != "v1" {
-		return fmt.Errorf("invalid resolver contract identity")
+		return fmt.Errorf("invalid resolver contract identity: schema=%q kind=%q name=%q language=%q", contract.Schema, contract.Kind, contract.Name, contract.LanguageVersion)
 	}
 	if contract.FixedDenominator != 7 || !sameStrings(contract.Precedence, Precedence) || !sameStrings(contract.UnknownFields, []string{"stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"}) {
 		return fmt.Errorf("fixed denominator or resolution precedence does not match")
