@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.27.x'
+          cache: false
       - name: Bind exact subject identity
         run: test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
       - name: Run semantic audit

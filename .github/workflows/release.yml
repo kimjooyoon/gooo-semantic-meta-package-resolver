@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.27.x'
+          cache: false
       - name: Verify immutable releases capability with repository API
         shell: bash
         run: |
