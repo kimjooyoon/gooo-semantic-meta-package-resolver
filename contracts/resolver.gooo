@@ -2,7 +2,7 @@ gooo contract semantic_meta_package_resolver v1
 
 grammar declaration=gooo|package|version|semantic_id|stage|origin|version_contract|export|import|immutable|selection|lock
 grammar declaration=grammar|rule|type|capability|effect|origin_rule|fixed_denominator|precedence|unknown_fields
-grammar key_rows=semantic_id|stage|type|capability|effect|owner
+grammar declaration=semantic_id|stage|type|capability|effect|owner
 grammar artifact=linked.gooo|linked-ir.json|linked-artifact.go|gooo.lock.json
 grammar source_authority=grammar|rule|type|effect|origin|fixed_denominator|precedence
 rule name=immutable_selection definition=digest_proof_then_semantic_signature_then_lowest_compatible_version
