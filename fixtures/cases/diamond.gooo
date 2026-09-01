@@ -1,0 +1,5 @@
+gooo consumer deterministic_diamond v1
+version value=1.0.0
+selection strategy=semantic-contract-first version_order=lowest-compatible registry=fixture-catalog no_latest=true
+import package=left constraint=1.0.0 semantic_id=left.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/diamond
+import package=right constraint=1.0.0 semantic_id=right.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/diamond

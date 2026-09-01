@@ -1,0 +1,102 @@
+name: immutable release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out tagged revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+          cache: false
+      - name: Verify immutable releases capability with repository API
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases" > "$RUNNER_TEMP/immutable.json"
+          jq -e '.enabled == true' "$RUNNER_TEMP/immutable.json" >/dev/null
+      - name: Verify tag identity and refuse replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "release already exists; public release overwrite is forbidden" >&2
+            exit 1
+          fi
+          ref=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}")
+          test "$(jq -r '.object.type' <<< "$ref")" = "tag"
+          tag_object=$(jq -r '.object.sha' <<< "$ref")
+          target=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" --jq '.object.sha')
+          test "$target" = "$GITHUB_SHA"
+          printf '%s\n' "$tag_object" > "$RUNNER_TEMP/tag-object.sha"
+      - name: Build and create evidence bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          go build ./...
+          go test ./...
+          bash scripts/semantic-audit.sh
+          bash scripts/conformance.sh "$RUNNER_TEMP/conformance"
+          mkdir -p "$RUNNER_TEMP/bundle/conformance"
+          cp "$RUNNER_TEMP/conformance/conformance.json" "$RUNNER_TEMP/bundle/conformance/conformance.json"
+          cp contracts/ci-evidence-v1.schema.json "$RUNNER_TEMP/bundle/ci-evidence-v1.schema.json"
+          cp fixtures/catalog.lock.json "$RUNNER_TEMP/bundle/catalog.lock.json"
+          cp "$RUNNER_TEMP/immutable.json" "$RUNNER_TEMP/bundle/immutable-releases.json"
+          cp "$RUNNER_TEMP/tag-object.sha" "$RUNNER_TEMP/bundle/tag-object.sha"
+          go run ./cmd/gooo-semantic-meta-package-resolver run \
+            --source fixtures/cases/exact-lock.gooo --contract contracts/resolver.gooo \
+            --catalog fixtures/catalog.json --catalog-lock fixtures/catalog.lock.json \
+            --out "$RUNNER_TEMP/bundle/integration" --execute
+          printf 'tag=%s\ntarget_commit=%s\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" > "$RUNNER_TEMP/bundle/release-metadata.txt"
+          tar -C "$RUNNER_TEMP/bundle" -czf "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz" .
+          sha256sum "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz" | awk '{print $1}' > "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz.sha256"
+      - name: Create draft release
+        shell: bash
+        run: |
+          set -euo pipefail
+          draft=$(gh api --method POST "repos/${GITHUB_REPOSITORY}/releases" \
+            -f tag_name="$GITHUB_REF_NAME" -f target_commitish="$GITHUB_SHA" \
+            -f name="$GITHUB_REF_NAME" -f body="Immutable semantic resolver evidence for $GITHUB_SHA." \
+            -F draft=true -F prerelease=false)
+          jq -e '.draft == true and .tag_name == env.GITHUB_REF_NAME' <<< "$draft" >/dev/null
+          jq -r '.id' <<< "$draft" > "$RUNNER_TEMP/release-id"
+      - name: Upload draft assets without replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          id=$(cat "$RUNNER_TEMP/release-id")
+          upload_url=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${id}" --jq '.upload_url' | sed 's/{?name,label}//')
+          for asset in "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz" "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz.sha256"; do
+            name=$(basename "$asset")
+            case "$name" in
+              *.tar.gz) content_type=application/gzip ;;
+              *) content_type=text/plain ;;
+            esac
+            gh api --method POST "${upload_url}?name=${name}" -H "Content-Type: ${content_type}" --input "$asset" >/dev/null
+          done
+      - name: Publish draft then verify immutable release and asset digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          id=$(cat "$RUNNER_TEMP/release-id")
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${id}" -F draft=false > "$RUNNER_TEMP/published.json"
+          jq -e '.draft == false and .immutable == true' "$RUNNER_TEMP/published.json" >/dev/null
+          release_digest=$(jq -r --arg name "release-${GITHUB_REF_NAME}.tar.gz" '.assets[] | select(.name == $name) | .digest' "$RUNNER_TEMP/published.json")
+          local_digest="sha256:$(cat "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz.sha256")"
+          test "$release_digest" = "$local_digest"
+          sidecar_digest=$(jq -r --arg name "release-${GITHUB_REF_NAME}.tar.gz.sha256" '.assets[] | select(.name == $name) | .digest' "$RUNNER_TEMP/published.json")
+          test "$sidecar_digest" = "sha256:$(sha256sum "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz.sha256" | awk '{print $1}')"
+          jq -e '{immutable,tag_name,target_commitish,assets:[.assets[]|{name,digest,size}]}' "$RUNNER_TEMP/published.json" >> "$GITHUB_STEP_SUMMARY"

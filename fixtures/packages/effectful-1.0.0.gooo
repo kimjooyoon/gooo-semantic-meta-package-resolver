@@ -1,0 +1,9 @@
+gooo package effectful v1
+package name=effectful
+version value=1.0.0
+semantic_id value=effectful.api
+stage value=stable
+origin owner=kimjooyoon/effectful kind=first_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=effectful.value semantic_id=effectful.api type=Value stage=stable capability=read effect=io optional=false
+immutable proof=fixture-catalog-v1

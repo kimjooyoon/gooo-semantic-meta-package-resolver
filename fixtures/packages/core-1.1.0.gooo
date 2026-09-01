@@ -1,0 +1,10 @@
+gooo package core v1
+package name=core
+version value=1.1.0
+semantic_id value=core.api
+stage value=stable
+origin owner=kimjooyoon/core kind=first_party
+version_contract major=1 minor=1 patch=0 compatibility=semantic-extension
+export id=core.value semantic_id=core.api type=Value stage=stable capability=read effect=pure optional=false
+export id=core.describe semantic_id=core.describe type=Description stage=stable capability=read effect=pure optional=true
+immutable proof=fixture-catalog-v1

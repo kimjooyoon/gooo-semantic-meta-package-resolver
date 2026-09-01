@@ -1,0 +1,4 @@
+gooo consumer version_only_effect_incompatible v1
+version value=1.0.0
+selection strategy=semantic-contract-first version_order=lowest-compatible registry=fixture-catalog no_latest=true
+import package=effectful constraint=^1.0 semantic_id=effectful.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/effectful

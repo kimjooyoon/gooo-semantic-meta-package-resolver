@@ -1,0 +1,25 @@
+gooo contract semantic_meta_package_resolver v1
+
+grammar declaration=gooo|package|version|semantic_id|stage|origin|version_contract|export|import|immutable|selection|lock
+grammar declaration=grammar|rule|type|capability|effect|origin_rule|fixed_denominator|precedence|unknown_fields
+grammar declaration=semantic_id|stage|type|capability|effect|owner
+grammar artifact=linked.gooo|linked-ir.json|linked-artifact.go|gooo.lock.json
+grammar source_authority=grammar|rule|type|effect|origin|fixed_denominator|precedence
+rule name=immutable_selection definition=digest_proof_then_semantic_signature_then_lowest_compatible_version
+rule name=no_registry_latestness definition=fixture_catalog_digest_is_the_only_catalog_identity
+rule name=origin_ownership definition=import_owner_must_equal_export_owner
+rule name=effect_safety definition=effect_rows_must_match_exactly
+rule name=resolution_precedence definition=REFUTED>UNKNOWN>CLOSED
+type name=semantic_id definition=stable_qualified_identifier
+type name=stage definition=source|lowered|linked|executed
+type name=capability_row definition=sorted_named_capabilities
+type name=effect_row definition=sorted_exact_effects
+capability name=required row=import_declared_subset_of_export
+capability name=provided row=export_declared
+effect name=pure row=no_external_write
+effect name=io row=explicit_external_effect
+origin_rule name=ownership definition=owner_is_part_of_signature
+origin_rule name=release definition=public_release_adapter_is_optional_and_non_authoritative
+fixed_denominator id=semantic-meta-package-resolver-v1 cases=7
+precedence states=REFUTED>UNKNOWN>CLOSED
+unknown_fields fields=stage,step,reason,unknown_class,next_operation,blocked_by
