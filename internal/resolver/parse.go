@@ -37,10 +37,15 @@ func ParseSource(path string) (Source, error) {
 			source.Kind, source.Name, source.LanguageVersion = fields[1], fields[2], fields[3]
 			source.Schema = "gooo/" + fields[1] + "/source/v1"
 		case "grammar":
-			if valueErr != nil || values["declaration"] == "" {
+			if valueErr != nil || len(values) != 1 {
 				return Source{}, fmt.Errorf("line %d: invalid grammar: %w", lineNo, valueErr)
 			}
-			source.Grammar = append(source.Grammar, values["declaration"])
+			for _, value := range values {
+				if value == "" {
+					return Source{}, fmt.Errorf("line %d: invalid grammar declaration", lineNo)
+				}
+				source.Grammar = append(source.Grammar, value)
+			}
 		case "rule":
 			if valueErr != nil || values["name"] == "" || values["definition"] == "" {
 				return Source{}, fmt.Errorf("line %d: invalid rule: %w", lineNo, valueErr)
