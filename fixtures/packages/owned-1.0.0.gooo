@@ -1,0 +1,9 @@
+gooo package owned v1
+package name=owned
+version value=1.0.0
+semantic_id value=owned.api
+stage value=stable
+origin owner=other-owner/owned kind=third_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=owned.value semantic_id=owned.api type=Value stage=stable capability=read effect=pure optional=false
+immutable proof=fixture-catalog-v1

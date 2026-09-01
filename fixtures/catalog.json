@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/semantic-meta-package-resolver/catalog/v1",
+  "entries": [
+    {"name":"common","version":"1.0.0","digest":"sha256:a9265c22be87846c8259bdb23ad42aa94eb3a738d64788ba8956901b17986dfb","source":"packages/common-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/common"},
+    {"name":"core","version":"1.0.0","digest":"sha256:c574a8e07ee16c18993f37aefdd03f3387b5d83554a05119e66ef2c811099b06","source":"packages/core-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/core"},
+    {"name":"core","version":"1.1.0","digest":"sha256:6752afc19e4c44c056dbb3fbe5bdc390fe8d1060f487dccb67858e2f2fc52abe","source":"packages/core-1.1.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/core"},
+    {"name":"effectful","version":"1.0.0","digest":"sha256:50200cea876dbdf381feb8c9106f6be36bb113c478062caa2120b7e722e3e086","source":"packages/effectful-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/effectful"},
+    {"name":"left","version":"1.0.0","digest":"sha256:3c59451cbfb2e403031ff2822312dd62b365006293319c1477e8f5183685ab8d","source":"packages/left-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/diamond"},
+    {"name":"owned","version":"1.0.0","digest":"sha256:ffe6b5020f87c7e87e7bee8edc775f4cf540cc3d6256a85695c512c04170e1eb","source":"packages/owned-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"other-owner/owned"},
+    {"name":"right","version":"1.0.0","digest":"sha256:b9ce97e533b56c16482cd26b56f0fe3c6346664e91d5cfe3b7f7e4de887c6fdf","source":"packages/right-1.0.0.gooo","immutable_proof":"fixture-catalog-v1","release_adapter":"fixture","owner":"kimjooyoon/diamond"},
+    {"name":"unproven","version":"1.0.0","digest":"sha256:cbaff45b8b496d1b2e853b33e6747ed5799f4090aa70554a11c72837e63f2168","source":"packages/unproven-1.0.0.gooo","immutable_proof":"","release_adapter":"public-release","owner":"kimjooyoon/unproven"}
+  ]
+}

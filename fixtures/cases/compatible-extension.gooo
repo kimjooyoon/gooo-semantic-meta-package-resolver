@@ -1,0 +1,4 @@
+gooo consumer compatible_extension v1
+version value=1.0.0
+selection strategy=semantic-contract-first version_order=lowest-compatible registry=fixture-catalog no_latest=true
+import package=core constraint=^1.1 semantic_id=core.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/core

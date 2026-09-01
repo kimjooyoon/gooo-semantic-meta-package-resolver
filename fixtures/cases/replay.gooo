@@ -1,0 +1,5 @@
+gooo consumer replay_closed v1
+version value=1.0.0
+selection strategy=semantic-contract-first version_order=lowest-compatible registry=fixture-catalog no_latest=true
+import package=core constraint=1.0.0 semantic_id=core.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/core
+lock package=core digest=sha256:c574a8e07ee16c18993f37aefdd03f3387b5d83554a05119e66ef2c811099b06

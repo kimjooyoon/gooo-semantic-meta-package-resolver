@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gooo/semantic-meta-package-resolver/ci-evidence/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","subject_sha","inventory","stages","tests","local_executions","repository_writes","improvement"],
+  "properties": {
+    "schema": {"const":"gooo/semantic-meta-package-resolver/ci-evidence/v1"},
+    "subject_sha": {"type":"string","minLength":40},
+    "inventory": {
+      "type":"object","additionalProperties":false,"required":["scope","go","gooo"],
+      "properties": {
+        "scope":{"const":"tracked files excluding root README.md"},
+        "go":{"$ref":"#/$defs/file_counts"},
+        "gooo":{"$ref":"#/$defs/file_counts"}
+      }
+    },
+    "stages": {
+      "type":"object","additionalProperties":false,"required":["compile","build","test","conformance","integration"],
+      "properties": {
+        "compile":{"$ref":"#/$defs/runtime"},
+        "build":{"$ref":"#/$defs/runtime"},
+        "test":{"$ref":"#/$defs/runtime"},
+        "conformance":{"$ref":"#/$defs/runtime"},
+        "integration":{"$ref":"#/$defs/runtime"}
+      }
+    },
+    "tests": {
+      "type":"object","additionalProperties":false,"required":["total","selected","executed","reused","failed","unknown"],
+      "properties":{"total":{"type":"integer","minimum":0},"selected":{"type":"integer","minimum":0},"executed":{"type":"integer","minimum":0},"reused":{"type":"integer","minimum":0},"failed":{"type":"integer","minimum":0},"unknown":{"type":"integer","minimum":0}}
+    },
+    "local_executions": {
+      "type":"object","additionalProperties":false,"required":["test","build","vet","conformance","integration"],
+      "properties":{"test":{"const":0},"build":{"const":0},"vet":{"const":0},"conformance":{"const":0},"integration":{"const":0}}
+    },
+    "repository_writes":{"const":0},
+    "improvement": {
+      "type":"object","additionalProperties":false,"required":["state","scenario","source","contract","toolchain","runner","before","after"],
+      "properties": {
+        "state":{"const":"CLOSED"},
+        "scenario":{"type":"string","minLength":1},
+        "source":{"type":"string","minLength":1},
+        "contract":{"type":"string","minLength":1},
+        "toolchain":{"type":"string","minLength":1},
+        "runner":{"type":"string","minLength":1},
+        "before":{"$ref":"#/$defs/pair"},
+        "after":{"$ref":"#/$defs/pair"}
+      }
+    }
+  },
+  "$defs": {
+    "runtime":{"type":"object","additionalProperties":false,"required":["wall_ms","peak_rss_kib"],"properties":{"wall_ms":{"type":"integer","minimum":0},"peak_rss_kib":{"type":"integer","minimum":0}}},
+    "file_counts":{"type":"object","additionalProperties":false,"required":["physical_lines","descendant_dirs","regular_files","generated_files","generated_bytes"],"properties":{"physical_lines":{"type":"integer","minimum":0},"descendant_dirs":{"type":"integer","minimum":0},"regular_files":{"type":"integer","minimum":0},"generated_files":{"type":"integer","minimum":0},"generated_bytes":{"type":"integer","minimum":0}}},
+    "pair":{"type":"object","additionalProperties":false,"required":["digest","status","selected"],"properties":{"digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},"status":{"type":"string","enum":["CLOSED","UNKNOWN","REFUTED"]},"selected":{"type":"integer","minimum":0}}}
+  }
+}

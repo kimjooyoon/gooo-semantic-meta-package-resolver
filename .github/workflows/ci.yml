@@ -1,0 +1,113 @@
+name: semantic resolver CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+          cache: true
+      - name: Bind exact subject identity
+        run: test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+      - name: Run semantic audit
+        run: bash scripts/semantic-audit.sh
+      - name: Compile packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/compile.measure" go test -run '^$' ./...
+          read seconds rss < "$RUNNER_TEMP/compile.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/compile.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/compile.rss"
+      - name: Build packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/build.measure" go build ./...
+          read seconds rss < "$RUNNER_TEMP/build.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/build.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/build.rss"
+      - name: Test packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/test.measure" go test ./...
+          read seconds rss < "$RUNNER_TEMP/test.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/test.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/test.rss"
+      - name: Vet and formatting checks
+        run: |
+          go vet ./...
+          test -z "$(gofmt -d $(git ls-files '*.go'))"
+      - name: Seven-case conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/conformance"
+          mkdir -p "$evidence_dir"
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/conformance.measure" bash scripts/conformance.sh "$evidence_dir"
+          read seconds rss < "$RUNNER_TEMP/conformance.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/conformance.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/conformance.rss"
+      - name: Linked artifact integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/integration"
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/integration.measure" go run ./cmd/gooo-semantic-meta-package-resolver run \
+            --source fixtures/cases/exact-lock.gooo --contract contracts/resolver.gooo \
+            --catalog fixtures/catalog.json --catalog-lock fixtures/catalog.lock.json \
+            --out "$out" --execute
+          read seconds rss < "$RUNNER_TEMP/integration.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/integration.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/integration.rss"
+          jq -e '.status == "CLOSED" and (.output_digest|test("^sha256:"))' "$out/execution.json" >/dev/null
+      - name: Build exact CI evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/evidence"
+          mkdir -p "$evidence_dir/conformance"
+          cp "$RUNNER_TEMP/conformance/conformance.json" "$evidence_dir/conformance/conformance.json"
+          bash scripts/write-ci-evidence.sh "$SUBJECT_SHA" \
+            "$(cat "$RUNNER_TEMP/compile.wall")" "$(cat "$RUNNER_TEMP/compile.rss")" \
+            "$(cat "$RUNNER_TEMP/build.wall")" "$(cat "$RUNNER_TEMP/build.rss")" \
+            "$(cat "$RUNNER_TEMP/test.wall")" "$(cat "$RUNNER_TEMP/test.rss")" \
+            "$(cat "$RUNNER_TEMP/conformance.wall")" "$(cat "$RUNNER_TEMP/conformance.rss")" \
+            "$(cat "$RUNNER_TEMP/integration.wall")" "$(cat "$RUNNER_TEMP/integration.rss")" \
+            7 7 7 0 0 0 "$RUNNER_TEMP" "$evidence_dir/ci-evidence.json"
+          jq -e '
+            .schema == "gooo/semantic-meta-package-resolver/ci-evidence/v1" and
+            (.stages | to_entries | all(.value.wall_ms|type=="number" and floor==. and . >= 0)) and
+            (.stages | to_entries | all(.value.peak_rss_kib|type=="number" and floor==. and . >= 0)) and
+            .tests == {total:7,selected:7,executed:7,reused:0,failed:0,unknown:0} and
+            .local_executions == {test:0,build:0,vet:0,conformance:0,integration:0} and .repository_writes == 0
+          ' "$evidence_dir/ci-evidence.json" >/dev/null
+          cat "$evidence_dir/ci-evidence.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Enforce zero repository writes
+        run: test -z "$(git status --porcelain=v1 --untracked-files=all)"
+      - name: Upload CI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-meta-package-resolver-evidence-${{ env.SUBJECT_SHA }}
+          if-no-files-found: error
+          path: ${{ runner.temp }}/evidence

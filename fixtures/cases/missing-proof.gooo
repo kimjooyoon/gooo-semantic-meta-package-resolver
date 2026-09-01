@@ -1,0 +1,4 @@
+gooo consumer missing_immutable_proof v1
+version value=1.0.0
+selection strategy=semantic-contract-first version_order=lowest-compatible registry=fixture-catalog no_latest=true
+import package=unproven constraint=^1.0 semantic_id=unproven.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/unproven

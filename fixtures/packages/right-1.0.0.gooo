@@ -1,0 +1,10 @@
+gooo package right v1
+package name=right
+version value=1.0.0
+semantic_id value=right.api
+stage value=stable
+origin owner=kimjooyoon/diamond kind=first_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=right.value semantic_id=right.api type=Value stage=stable capability=read effect=pure optional=false
+import package=common constraint=1.0.0 semantic_id=common.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/common
+immutable proof=fixture-catalog-v1

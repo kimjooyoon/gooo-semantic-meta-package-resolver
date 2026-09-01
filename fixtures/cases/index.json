@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/semantic-meta-package-resolver/cases/v1",
+  "fixed_denominator": 7,
+  "cases": [
+    {"id":"exact-lock-closed","source":"fixtures/cases/exact-lock.gooo","expected":"CLOSED","assertion":"exact_lock"},
+    {"id":"compatible-semantic-extension-closed","source":"fixtures/cases/compatible-extension.gooo","expected":"CLOSED","assertion":"compatible_extension"},
+    {"id":"deterministic-diamond-closed","source":"fixtures/cases/diamond.gooo","expected":"CLOSED","assertion":"diamond"},
+    {"id":"version-only-effect-incompatible-refuted","source":"fixtures/cases/effect-incompatible.gooo","expected":"REFUTED","assertion":"effect_refuted"},
+    {"id":"origin-ownership-conflict-refuted","source":"fixtures/cases/origin-conflict.gooo","expected":"REFUTED","assertion":"origin_refuted"},
+    {"id":"missing-immutable-proof-unknown","source":"fixtures/cases/missing-proof.gooo","expected":"UNKNOWN","assertion":"missing_proof"},
+    {"id":"replay-closed","source":"fixtures/cases/replay.gooo","expected":"CLOSED","assertion":"replay"}
+  ]
+}
