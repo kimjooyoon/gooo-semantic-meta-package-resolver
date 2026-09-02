@@ -59,3 +59,21 @@ module reference describes MVS as selecting the highest required module
 version and using checksums for content verification. This resolver adds a
 typed semantic boundary on top of that idea, but intentionally does not claim
 to replace Go's build graph, toolchain compatibility, or behavior-level proof.
+
+## v2 semantic-import boundary
+
+The v2 extension keeps v1 as a preserved compatibility denominator and adds a
+closed identity-and-link path. The import tuple is repository identity,
+immutable release ID, annotated tag object and target, asset ID and digest,
+package semantic ID, exported symbol-set digest, contract digest, and Go
+toolchain digest. Branch, latest, and semver text can constrain a catalog
+search but never establish identity. The v2 contract is the semantic authority;
+Go supplies resolver/evaluator/generator mechanics.
+
+The pipeline is `.gooo` import graph → pinned package manifests → merged
+symbol/type/capability/effect exports → canonical linked semantic IR → machine
+and human dossier. Same-name/same-digest packages deduplicate; same-name
+conflicting digests and dependency cycles are REFUTED. Missing release, asset,
+export disambiguation, or toolchain evidence remains UNKNOWN. The v2 contract
+fixes 12 cells/meta activities, proof and indicator vectors at 4/4/4, and the
+case denominator at 4 CLOSED/4 UNKNOWN/4 REFUTED.

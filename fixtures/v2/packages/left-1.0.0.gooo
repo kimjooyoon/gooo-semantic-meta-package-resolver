@@ -1,0 +1,16 @@
+gooo package left v2
+package name=left
+version value=1.0.0
+semantic_id value=left.api
+stage value=stable
+origin owner=kimjooyoon/diamond kind=first_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=left.value semantic_id=left.api type=Value stage=stable capability=read effect=pure optional=false
+import package=common constraint=1.0.0 semantic_id=common.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/common repository=github.com/kimjooyoon/gooo-semantic-meta-package-resolver release_id=380317048 tag_object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d tag_target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1 asset_id=539217648 asset_digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee package_semantic_id=common.api symbols_digest=sha256:6292f62e70de0e7378cbe0344ec7ce0ab639da3c0b2a1777e357517a90772fdc contract_digest=sha256:bbc57a5577373d63e03ba58bd882b3862615955d761b6e57b3f2b7964d584706 toolchain_digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde
+repository identity=github.com/kimjooyoon/gooo-semantic-meta-package-resolver
+release id=380317048
+tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1
+asset id=539217648 digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee
+symbol_set digest=sha256:a66e34ed2db2eb302d8622cf085e795bf0eeb239d7aa62468aa45d47348afb96
+contract digest=sha256:bbc57a5577373d63e03ba58bd882b3862615955d761b6e57b3f2b7964d584706
+toolchain digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde

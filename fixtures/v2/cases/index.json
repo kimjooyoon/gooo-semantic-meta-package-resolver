@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/semantic-meta-package-resolver/cases/v2",
+  "fixed_denominator": 12,
+  "cells": 12,
+  "meta_activities": 12,
+  "proof_closed": 4,
+  "proof_unknown": 4,
+  "proof_refuted": 4,
+  "indicator_closed": 4,
+  "indicator_unknown": 4,
+  "indicator_refuted": 4,
+  "cases": [
+    {"id":"exact-single-import-closed","source":"fixtures/v2/cases/exact-single.gooo","expected":"CLOSED","assertion":"exact_single"},
+    {"id":"deterministic-diamond-convergence-closed","source":"fixtures/v2/cases/diamond-convergence.gooo","expected":"CLOSED","assertion":"diamond"},
+    {"id":"same-name-same-digest-dedupe-closed","source":"fixtures/v2/cases/same-name-same-digest.gooo","expected":"CLOSED","assertion":"dedupe"},
+    {"id":"explicit-fixed-point-merge-closed","source":"fixtures/v2/cases/fixed-point-merge.gooo","expected":"CLOSED","assertion":"fixed_point"},
+    {"id":"missing-immutable-release-unknown","source":"fixtures/v2/cases/missing-immutable-release.gooo","expected":"UNKNOWN","assertion":"missing_release"},
+    {"id":"missing-asset-digest-unknown","source":"fixtures/v2/cases/missing-asset-digest.gooo","expected":"UNKNOWN","assertion":"missing_asset"},
+    {"id":"ambiguous-export-unknown","source":"fixtures/v2/cases/ambiguous-export.gooo","expected":"UNKNOWN","assertion":"ambiguous_export"},
+    {"id":"toolchain-mismatch-unknown","source":"fixtures/v2/cases/toolchain-mismatch.gooo","expected":"UNKNOWN","assertion":"toolchain_mismatch"},
+    {"id":"same-name-conflicting-digest-refuted","source":"fixtures/v2/cases/conflicting-digest.gooo","expected":"REFUTED","assertion":"conflicting_digest"},
+    {"id":"dependency-cycle-refuted","source":"fixtures/v2/cases/dependency-cycle.gooo","expected":"REFUTED","assertion":"dependency_cycle"},
+    {"id":"forged-package-identity-refuted","source":"fixtures/v2/cases/forged-package-identity.gooo","expected":"REFUTED","assertion":"forged_identity"},
+    {"id":"semantic-export-conflict-refuted","source":"fixtures/v2/cases/semantic-export-conflict.gooo","expected":"REFUTED","assertion":"semantic_export"}
+  ]
+}

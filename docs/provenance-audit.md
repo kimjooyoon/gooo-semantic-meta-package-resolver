@@ -14,6 +14,8 @@ operator_process_commit=cd11ca65135fc9eefe74263a70abbd4bb4c90f2e
 operator_process_reason=direct post-merge push to main
 v0.1.0=tag-preserved|release-absent|failed-workflow-33484531613
 v0.1.1=tag-preserved|immutable-release-published
+v0.1.2=tag-preserved|release-id-380317048|immutable=true|asset-id-539217648|asset-digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee|target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1|tag-object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d
+v2_gate=cross_project_required_gates=0|pr-actions-authoritative|release-job-draft-first-only
 ```
 
 Neither public tag was overwritten or deleted. This audit file does not alter
