@@ -37,7 +37,6 @@ gooo_files=$(count_files '*.gooo'); gooo_lines=$(physical_lines '*.gooo'); gooo_
 source_digest=$(sha256sum fixtures/cases/index.json | awk '{print $1}')
 contract_digest=$(sha256sum contracts/resolver.gooo | awk '{print $1}')
 runner_digest=$(sha256sum scripts/conformance.sh scripts/semantic-audit.sh | sha256sum | awk '{print $1}')
-replay_digest=$(sha256sum "$generated_dir/conformance/conformance.json" | awk '{print $1}')
 mkdir -p "$(dirname "$output")"
 jq -S -n \
   --arg schema "gooo/semantic-meta-package-resolver/ci-evidence/v1" \
@@ -45,8 +44,6 @@ jq -S -n \
   --arg source_digest "sha256:$source_digest" \
   --arg contract_digest "sha256:$contract_digest" \
   --arg runner_digest "sha256:$runner_digest" \
-  --arg before_digest "sha256:$replay_digest" \
-  --arg after_digest "sha256:$replay_digest" \
   --argjson compile_wall "$compile_wall" --argjson compile_rss "$compile_rss" \
   --argjson build_wall "$build_wall" --argjson build_rss "$build_rss" \
   --argjson test_wall "$test_wall" --argjson test_rss "$test_rss" \
@@ -63,4 +60,4 @@ jq -S -n \
     stages:{compile:{wall_ms:$compile_wall,peak_rss_kib:$compile_rss},build:{wall_ms:$build_wall,peak_rss_kib:$build_rss},test:{wall_ms:$test_wall,peak_rss_kib:$test_rss},conformance:{wall_ms:$conformance_wall,peak_rss_kib:$conformance_rss},integration:{wall_ms:$integration_wall,peak_rss_kib:$integration_rss}},
     tests:{total:$tests_total,selected:$tests_selected,executed:$tests_executed,reused:$tests_reused,failed:$tests_failed,unknown:$tests_unknown},
     local_executions:{test:0,build:0,vet:0,conformance:0,integration:0},repository_writes:0,
-    improvement:{state:"CLOSED",scenario:"fixed-seven-case-resolution-replay",source:$source_digest,contract:$contract_digest,toolchain:"go1.27.x",runner:$runner_digest,before:{digest:$before_digest,status:"CLOSED",selected:7},after:{digest:$after_digest,status:"CLOSED",selected:7}}}' > "$output"
+    improvement:{state:"UNKNOWN",scenario:"fixed-seven-case-resolution-replay",source:$source_digest,contract:$contract_digest,toolchain:"go1.27.x",runner:$runner_digest,before:null,after:null,reason:"EXACT_BEFORE_AFTER_IDENTITY_PAIR_NOT_AVAILABLE"}}' > "$output"

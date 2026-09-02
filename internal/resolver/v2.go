@@ -19,6 +19,11 @@ const (
 	V2MergeStrategy      = "FIXED_POINT"
 )
 
+var (
+	V2ProofChoices     = []string{"FOUNDATION", "COHERENCE", "REGRESSION"}
+	V2IndicatorClasses = []string{"DRIVER", "OUTCOME", "GUARDRAIL"}
+)
+
 type v2ResolveState struct {
 	root        Source
 	contract    Source
@@ -81,6 +86,9 @@ func ValidateV2Contract(contract Source) error {
 	if len(contract.Cells) != 12 || len(contract.MetaActivities) != 12 || !sameStrings(contract.Precedence, Precedence) || !sameStrings(contract.UnknownFields, []string{"stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"}) {
 		return fmt.Errorf("v2 contract cells, precedence, or UNKNOWN fields are incomplete")
 	}
+	if err := validateV2CellBindings(contract); err != nil {
+		return err
+	}
 	if contract.MergeStrategy != V2MergeStrategy || contract.CrossProjectRequiredGates != 0 {
 		return fmt.Errorf("v2 contract requires explicit FIXED_POINT and zero cross-project gates")
 	}
@@ -96,6 +104,48 @@ func ValidateV2Contract(contract Source) error {
 	return nil
 }
 
+func validateV2CellBindings(contract Source) error {
+	if len(contract.CellBindings) != 12 {
+		return fmt.Errorf("v2 contract must declare exactly 12 proof and indicator cell bindings")
+	}
+	seenCells := make(map[string]bool, len(contract.CellBindings))
+	seenCases := make(map[string]bool, len(contract.CellBindings))
+	proofCounts := make(map[string]int, len(V2ProofChoices))
+	indicatorCounts := make(map[string]int, len(V2IndicatorClasses))
+	for _, cell := range contract.CellBindings {
+		if cell.CellID == "" || cell.CaseID == "" || cell.Activity == "" || cell.EvidenceRef == "" || !contains(V2ProofChoices, cell.ProofChoice) || !contains(V2IndicatorClasses, cell.IndicatorClass) {
+			return fmt.Errorf("v2 cell binding %q is incomplete", cell.CellID)
+		}
+		if seenCells[cell.CellID] || seenCases[cell.CaseID] {
+			return fmt.Errorf("v2 cell or case binding is duplicated: %q", cell.CellID)
+		}
+		seenCells[cell.CellID] = true
+		seenCases[cell.CaseID] = true
+		proofCounts[cell.ProofChoice]++
+		indicatorCounts[cell.IndicatorClass]++
+	}
+	for _, choice := range V2ProofChoices {
+		if proofCounts[choice] != 4 {
+			return fmt.Errorf("v2 proof choice %s must occur exactly 4 times", choice)
+		}
+	}
+	for _, class := range V2IndicatorClasses {
+		if indicatorCounts[class] != 4 {
+			return fmt.Errorf("v2 indicator class %s must occur exactly 4 times", class)
+		}
+	}
+	return nil
+}
+
+func v2CellForRoot(contract Source, rootName string) (V2CellBinding, bool) {
+	for _, cell := range contract.CellBindings {
+		if cell.CellID == rootName {
+			return cell, true
+		}
+	}
+	return V2CellBinding{}, false
+}
+
 func ValidateV2Root(root Source, contract Source) error {
 	if root.Kind != "consumer" || root.Name == "" || root.Version != "2.0.0" || root.LanguageVersion != "v2" {
 		return fmt.Errorf("root must be a v2 consumer with version 2.0.0")
@@ -105,6 +155,9 @@ func ValidateV2Root(root Source, contract Source) error {
 	}
 	if root.MergeStrategy != V2MergeStrategy || len(root.Imports) == 0 {
 		return fmt.Errorf("v2 root requires explicit FIXED_POINT merge and at least one import")
+	}
+	if _, ok := v2CellForRoot(contract, root.Name); !ok {
+		return fmt.Errorf("v2 root %q has no authority cell binding", root.Name)
 	}
 	for _, imp := range root.Imports {
 		if err := validateImportIdentity(imp, contract); err != nil {
@@ -138,6 +191,7 @@ func (r V2Resolver) Resolve(root Source) (V2Resolution, error) {
 	if err := ValidateV2Root(root, r.Contract); err != nil {
 		return V2Resolution{}, err
 	}
+	cell, _ := v2CellForRoot(r.Contract, root.Name)
 	state := &v2ResolveState{root: root, contract: r.Contract, catalog: append([]V2CatalogEntry(nil), r.Catalog.Entries...), catalogRoot: r.CatalogRoot, selected: map[string]v2SelectedPackage{}, resolving: map[string]bool{}, visited: map[string]bool{}}
 	imports := append([]ImportDecl(nil), root.Imports...)
 	sort.SliceStable(imports, func(i, j int) bool { return v2ImportKey(imports[i]) < v2ImportKey(imports[j]) })
@@ -154,13 +208,14 @@ func (r V2Resolver) Resolve(root Source) (V2Resolution, error) {
 	identityDigest, err := digestValue(struct {
 		ContractDigest  string              `json:"contract_digest"`
 		ToolchainDigest string              `json:"toolchain_digest"`
+		Cell            V2CellBinding       `json:"cell"`
 		Packages        []V2PackageManifest `json:"packages"`
-	}{r.Contract.SourceDigest, r.Contract.Identity.GoToolchainDigest, packages})
+	}{r.Contract.SourceDigest, r.Contract.Identity.GoToolchainDigest, cell, packages})
 	if err != nil {
 		return V2Resolution{}, err
 	}
 	status, claim := finalClaim(state.decisions)
-	resolution := V2Resolution{Schema: V2ResolutionSchema, Root: root.Name, Status: status, Claim: claim, ContractDigest: r.Contract.SourceDigest, ToolchainDigest: r.Contract.Identity.GoToolchainDigest, SourceDigest: root.SourceDigest, MergeStrategy: root.MergeStrategy, Packages: packages, Exports: merged, Edges: state.edges, Decisions: state.decisions, IdentityDigest: identityDigest}
+	resolution := V2Resolution{Schema: V2ResolutionSchema, Root: root.Name, Status: status, Claim: claim, ContractDigest: r.Contract.SourceDigest, ToolchainDigest: r.Contract.Identity.GoToolchainDigest, SourceDigest: root.SourceDigest, MergeStrategy: root.MergeStrategy, Cell: cell, Packages: packages, Exports: merged, Edges: state.edges, Decisions: state.decisions, IdentityDigest: identityDigest}
 	resolution.LinkedIRDigest, err = v2LinkedIRDigest(resolution)
 	if err != nil {
 		return V2Resolution{}, err
@@ -393,17 +448,21 @@ func v2LinkedIRDigest(resolution V2Resolution) (string, error) {
 		ContractDigest  string              `json:"contract_digest"`
 		ToolchainDigest string              `json:"toolchain_digest"`
 		MergeStrategy   string              `json:"merge_strategy"`
+		Cell            V2CellBinding       `json:"cell"`
 		Packages        []V2PackageManifest `json:"packages"`
 		Exports         []V2MergedExport    `json:"exports"`
 		Edges           []V2LinkEdge        `json:"edges"`
 		IdentityDigest  string              `json:"identity_digest"`
-	}{V2IRSchema, "v2", resolution.Root, resolution.Status, resolution.Claim, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, resolution.Packages, resolution.Exports, resolution.Edges, resolution.IdentityDigest}
+	}{V2IRSchema, "v2", resolution.Root, resolution.Status, resolution.Claim, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, resolution.Cell, resolution.Packages, resolution.Exports, resolution.Edges, resolution.IdentityDigest}
 	return digestValue(ir)
 }
 
 func VerifyV2Resolution(resolution V2Resolution) error {
 	if resolution.Schema != V2ResolutionSchema || resolution.Root == "" || resolution.ContractDigest == "" || resolution.ToolchainDigest == "" || resolution.MergeStrategy != V2MergeStrategy {
 		return fmt.Errorf("v2 resolution identity is incomplete")
+	}
+	if resolution.Cell.CellID == "" || resolution.Cell.CaseID == "" || resolution.Cell.Activity == "" || !contains(V2ProofChoices, resolution.Cell.ProofChoice) || !contains(V2IndicatorClasses, resolution.Cell.IndicatorClass) || resolution.Cell.EvidenceRef == "" {
+		return fmt.Errorf("v2 resolution cell evidence binding is incomplete")
 	}
 	if !resolution.Claim.Valid() || resolution.Status != resolution.Claim.State {
 		return fmt.Errorf("v2 resolution claim is invalid or does not match status")

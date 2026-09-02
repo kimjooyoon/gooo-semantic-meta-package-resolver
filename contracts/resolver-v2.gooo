@@ -5,8 +5,8 @@ gooo contract semantic_meta_package_resolver v2
 grammar declaration=gooo|package|version|semantic_id|stage|origin|version_contract|export|import|immutable|selection|lock|repository|release|tag|asset|symbol_set|contract|toolchain|merge|cell|gate
 grammar identity=repository_identity|immutable_release_id|annotated_tag_object|annotated_tag_target|asset_id|asset_digest|package_semantic_id|exported_symbol_set_digest|contract_digest|go_toolchain_digest
 grammar export_merge=symbol|type|capability|effect|canonical|fixed_point
-grammar artifact=pinned-package-manifests.json|linked.gooo|linked-ir.json|linked-artifact.go|machine-dossier.json|human-dossier.md|resolution.json
-grammar source_authority=grammar|rule|type|capability|effect|origin|identity|merge|fixed_denominator|precedence|unknown_fields
+grammar artifact=pinned-package-manifests.json|linked.gooo|linked-ir.json|linked-artifact.go|machine-dossier.json|human-dossier.md|resolution.json|manifest.json|conformance-v2.json|ci-evidence-v2.json
+grammar source_authority=grammar|rule|type|capability|effect|origin|identity|merge|fixed_denominator|precedence|unknown_fields|proof_choice|indicator_class|evidence_ref|cell_binding
 rule name=import_identity definition=repository_release_tag_asset_package_symbol_contract_toolchain_digest_tuple
 rule name=immutable_release definition=release_id_and_annotated_tag_object_target_are_required
 rule name=asset_binding definition=asset_id_and_sha256_digest_are_required
@@ -17,6 +17,7 @@ rule name=fixed_point_merge definition=explicit_FIXED_POINT_only
 rule name=canonical_linked_ir definition=sort_identity_edges_and_exports_before_digest
 rule name=no_latestness definition=branch_latest_and_semver_strings_are_not_identity
 rule name=cross_project_gate definition=cross_project_required_gates_equals_zero
+rule name=cell_evidence_binding definition=every_fixed_case_cell_carries_proof_indicator_and_dossier_reference
 type name=repository_identity definition=canonical_repository_qualified_name
 type name=immutable_release_id definition=public_release_numeric_id
 type name=annotated_tag definition=tag_object_sha_and_target_commit_sha
@@ -44,15 +45,15 @@ tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9
 asset id=539217648 digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee name=release-v0.1.2.tar.gz
 toolchain digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde version=go1.27.x
 
-cell name=IMPORT_GRAPH activity=PARSE_GOOO_IMPORT_GRAPH
-cell name=REPOSITORY_IDENTITY activity=VERIFY_REPOSITORY_IDENTITY
-cell name=IMMUTABLE_RELEASE activity=VERIFY_IMMUTABLE_RELEASE_ID
-cell name=ANNOTATED_TAG activity=VERIFY_ANNOTATED_TAG_OBJECT_TARGET
-cell name=ASSET_DIGEST activity=VERIFY_RELEASE_ASSET_DIGEST
-cell name=PACKAGE_MANIFEST activity=PIN_PACKAGE_MANIFEST_DIGEST
-cell name=PACKAGE_SEMANTIC_ID activity=VERIFY_PACKAGE_SEMANTIC_ID
-cell name=SYMBOL_SET activity=VERIFY_EXPORTED_SYMBOL_SET_DIGEST
-cell name=CONTRACT_DIGEST activity=VERIFY_CONTRACT_DIGEST
-cell name=TOOLCHAIN_DIGEST activity=VERIFY_GO_TOOLCHAIN_DIGEST
-cell name=EXPORT_MERGE activity=MERGE_SYMBOL_TYPE_CAPABILITY_EFFECT_ROWS
-cell name=LINKED_IR_DOSSIER activity=EMIT_CANONICAL_LINKED_IR_MACHINE_HUMAN_DOSSIER
+cell name=exact_single activity=PARSE_GOOO_IMPORT_GRAPH case_id=exact-single-import-closed proof_choice=FOUNDATION indicator_class=DRIVER evidence_ref=conformance-v2/cases/exact-single-import-closed
+cell name=diamond_convergence activity=VERIFY_REPOSITORY_IDENTITY case_id=deterministic-diamond-convergence-closed proof_choice=COHERENCE indicator_class=OUTCOME evidence_ref=conformance-v2/cases/deterministic-diamond-convergence-closed
+cell name=same_name_same_digest activity=VERIFY_IMMUTABLE_RELEASE_ID case_id=same-name-same-digest-dedupe-closed proof_choice=REGRESSION indicator_class=GUARDRAIL evidence_ref=conformance-v2/cases/same-name-same-digest-dedupe-closed
+cell name=fixed_point_merge activity=VERIFY_ANNOTATED_TAG_OBJECT_TARGET case_id=explicit-fixed-point-merge-closed proof_choice=FOUNDATION indicator_class=OUTCOME evidence_ref=conformance-v2/cases/explicit-fixed-point-merge-closed
+cell name=missing_immutable_release activity=VERIFY_RELEASE_ASSET_DIGEST case_id=missing-immutable-release-unknown proof_choice=COHERENCE indicator_class=DRIVER evidence_ref=conformance-v2/cases/missing-immutable-release-unknown
+cell name=missing_asset_digest activity=PIN_PACKAGE_MANIFEST_DIGEST case_id=missing-asset-digest-unknown proof_choice=REGRESSION indicator_class=GUARDRAIL evidence_ref=conformance-v2/cases/missing-asset-digest-unknown
+cell name=ambiguous_export activity=VERIFY_PACKAGE_SEMANTIC_ID case_id=ambiguous-export-unknown proof_choice=FOUNDATION indicator_class=GUARDRAIL evidence_ref=conformance-v2/cases/ambiguous-export-unknown
+cell name=toolchain_mismatch activity=VERIFY_EXPORTED_SYMBOL_SET_DIGEST case_id=toolchain-mismatch-unknown proof_choice=COHERENCE indicator_class=OUTCOME evidence_ref=conformance-v2/cases/toolchain-mismatch-unknown
+cell name=conflicting_digest activity=VERIFY_CONTRACT_DIGEST case_id=same-name-conflicting-digest-refuted proof_choice=REGRESSION indicator_class=DRIVER evidence_ref=conformance-v2/cases/same-name-conflicting-digest-refuted
+cell name=dependency_cycle activity=VERIFY_GO_TOOLCHAIN_DIGEST case_id=dependency-cycle-refuted proof_choice=FOUNDATION indicator_class=DRIVER evidence_ref=conformance-v2/cases/dependency-cycle-refuted
+cell name=forged_package_identity activity=MERGE_SYMBOL_TYPE_CAPABILITY_EFFECT_ROWS case_id=forged-package-identity-refuted proof_choice=REGRESSION indicator_class=GUARDRAIL evidence_ref=conformance-v2/cases/forged-package-identity-refuted
+cell name=semantic_export_conflict activity=EMIT_CANONICAL_LINKED_IR_MACHINE_HUMAN_DOSSIER case_id=semantic-export-conflict-refuted proof_choice=COHERENCE indicator_class=OUTCOME evidence_ref=conformance-v2/cases/semantic-export-conflict-refuted

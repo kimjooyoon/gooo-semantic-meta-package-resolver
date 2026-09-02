@@ -35,16 +35,17 @@
     },
     "repository_writes":{"const":0},
     "improvement": {
-      "type":"object","additionalProperties":false,"required":["state","scenario","source","contract","toolchain","runner","before","after"],
+      "type":"object","additionalProperties":false,"required":["state","scenario","source","contract","toolchain","runner","before","after","reason"],
       "properties": {
-        "state":{"const":"CLOSED"},
+        "state":{"const":"UNKNOWN"},
         "scenario":{"type":"string","minLength":1},
         "source":{"type":"string","minLength":1},
         "contract":{"type":"string","minLength":1},
         "toolchain":{"type":"string","minLength":1},
         "runner":{"type":"string","minLength":1},
-        "before":{"$ref":"#/$defs/pair"},
-        "after":{"$ref":"#/$defs/pair"}
+        "before":{"type":"null"},
+        "after":{"type":"null"},
+        "reason":{"const":"EXACT_BEFORE_AFTER_IDENTITY_PAIR_NOT_AVAILABLE"}
       }
     }
   },

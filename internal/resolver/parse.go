@@ -127,6 +127,12 @@ func ParseSource(path string) (Source, error) {
 			}
 			source.Cells = append(source.Cells, values["name"])
 			source.MetaActivities = append(source.MetaActivities, values["activity"])
+			if values["proof_choice"] != "" || values["indicator_class"] != "" || values["case_id"] != "" || values["evidence_ref"] != "" {
+				if values["proof_choice"] == "" || values["indicator_class"] == "" || values["case_id"] == "" || values["evidence_ref"] == "" {
+					return Source{}, fmt.Errorf("line %d: v2 cell requires case_id, proof_choice, indicator_class, and evidence_ref", lineNo)
+				}
+				source.CellBindings = append(source.CellBindings, V2CellBinding{CellID: values["name"], CaseID: values["case_id"], Activity: values["activity"], ProofChoice: values["proof_choice"], IndicatorClass: values["indicator_class"], EvidenceRef: values["evidence_ref"]})
+			}
 		case "merge":
 			if valueErr != nil || values["strategy"] == "" {
 				return Source{}, fmt.Errorf("line %d: invalid merge strategy: %w", lineNo, valueErr)

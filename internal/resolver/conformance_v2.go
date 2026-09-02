@@ -27,6 +27,9 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 	if index.Schema != V2CaseSchema || index.FixedDenominator != 12 || index.Cells != 12 || index.MetaActivities != 12 || index.ProofClosed != 4 || index.ProofUnknown != 4 || index.ProofRefuted != 4 || index.IndicatorClosed != 4 || index.IndicatorUnknown != 4 || index.IndicatorRefuted != 4 || len(index.Cases) != 12 {
 		return V2ConformanceResult{}, fmt.Errorf("v2 case denominator must contain exactly 12 cells and 4/4/4 proof and indicator vectors")
 	}
+	if err := validateV2CaseIndex(contract, index); err != nil {
+		return V2ConformanceResult{}, err
+	}
 	observations := make([]V2CaseObservation, 0, len(index.Cases))
 	for _, spec := range index.Cases {
 		root, err := ParseSource(filepath.Join(repoRoot, spec.Source))
@@ -40,6 +43,9 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 		}
 		if resolution.Status != spec.Expected {
 			return V2ConformanceResult{}, fmt.Errorf("case %s: expected %s, got %s", spec.ID, spec.Expected, resolution.Status)
+		}
+		if resolution.Cell.CellID != spec.CellID || resolution.Cell.CaseID != spec.ID || resolution.Cell.ProofChoice != spec.ProofChoice || resolution.Cell.IndicatorClass != spec.IndicatorClass {
+			return V2ConformanceResult{}, fmt.Errorf("case %s: resolution cell evidence does not match authority mapping", spec.ID)
 		}
 		if !resolution.Claim.Valid() {
 			return V2ConformanceResult{}, fmt.Errorf("case %s: invalid claim tuple", spec.ID)
@@ -59,6 +65,13 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 		if !deterministic {
 			return V2ConformanceResult{}, fmt.Errorf("case %s: generated v2 replay changed", spec.ID)
 		}
+		caseDir := filepath.Join(outPath, "cases", spec.ID)
+		if filepath.Base(caseDir) != spec.ID {
+			return V2ConformanceResult{}, fmt.Errorf("case %s: unsafe evidence output path", spec.ID)
+		}
+		if err := WriteV2Artifacts(caseDir, artifacts); err != nil {
+			return V2ConformanceResult{}, fmt.Errorf("case %s: write evidence artifacts: %w", spec.ID, err)
+		}
 		if spec.Assertion == "diamond" {
 			reversed := append([]V2CatalogEntry(nil), catalog.Entries...)
 			for left, right := 0, len(reversed)-1; left < right; left, right = left+1, right-1 {
@@ -73,11 +86,15 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 				return V2ConformanceResult{}, fmt.Errorf("case %s: catalog order changed canonical linked IR", spec.ID)
 			}
 		}
-		observations = append(observations, V2CaseObservation{ID: spec.ID, Expected: spec.Expected, Observed: resolution.Status, Assertion: spec.Assertion, Claim: resolution.Claim, IdentityDigest: resolution.IdentityDigest, LinkedIRDigest: resolution.LinkedIRDigest, Deterministic: deterministic})
+		observations = append(observations, V2CaseObservation{ID: spec.ID, Expected: spec.Expected, Observed: resolution.Status, Assertion: spec.Assertion, CellID: resolution.Cell.CellID, Activity: resolution.Cell.Activity, ProofChoice: resolution.Cell.ProofChoice, IndicatorClass: resolution.Cell.IndicatorClass, EvidenceRef: resolution.Cell.EvidenceRef, Claim: resolution.Claim, IdentityDigest: resolution.IdentityDigest, LinkedIRDigest: resolution.LinkedIRDigest, SemanticIRDigest: digestBytes(artifacts.IR), MachineDossierDigest: digestBytes(artifacts.MachineDossier), HumanDossierDigest: digestBytes(artifacts.HumanDossier), ArtifactManifestDigest: digestBytes(artifacts.Manifest), Deterministic: deterministic})
 	}
 	sort.Slice(observations, func(i, j int) bool { return observations[i].ID < observations[j].ID })
+	proofCounts := map[string]int{}
+	indicatorCounts := map[string]int{}
 	result := V2ConformanceResult{Schema: V2CaseSchema, Status: Closed, Cases: len(observations), Cells: index.Cells, MetaActivities: index.MetaActivities, Proof: map[string]int{"CLOSED": 4, "UNKNOWN": 4, "REFUTED": 4}, Indicators: map[string]int{"CLOSED": 4, "UNKNOWN": 4, "REFUTED": 4}, Observations: observations}
 	for _, observation := range observations {
+		proofCounts[observation.ProofChoice]++
+		indicatorCounts[observation.IndicatorClass]++
 		switch observation.Observed {
 		case Closed:
 			result.Closed++
@@ -87,7 +104,7 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 			result.Refuted++
 		}
 	}
-	if result.Closed != 4 || result.Unknown != 4 || result.Refuted != 4 {
+	if result.Closed != 4 || result.Unknown != 4 || result.Refuted != 4 || proofCounts["FOUNDATION"] != 4 || proofCounts["COHERENCE"] != 4 || proofCounts["REGRESSION"] != 4 || indicatorCounts["DRIVER"] != 4 || indicatorCounts["OUTCOME"] != 4 || indicatorCounts["GUARDRAIL"] != 4 {
 		return V2ConformanceResult{}, fmt.Errorf("unexpected v2 fixed case summary")
 	}
 	if err := os.MkdirAll(outPath, 0o755); err != nil {
@@ -101,6 +118,45 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 		return V2ConformanceResult{}, err
 	}
 	return result, nil
+}
+
+func validateV2CaseIndex(contract Source, index V2CaseIndex) error {
+	seen := make(map[string]bool, len(index.Cases))
+	for _, spec := range index.Cases {
+		if spec.ID == "" || spec.CellID == "" || spec.ProofChoice == "" || spec.IndicatorClass == "" {
+			return fmt.Errorf("case %s: proof and indicator mapping is incomplete", spec.ID)
+		}
+		if seen[spec.ID] {
+			return fmt.Errorf("case %s: duplicate case mapping", spec.ID)
+		}
+		seen[spec.ID] = true
+		var binding *V2CellBinding
+		for index := range contract.CellBindings {
+			if contract.CellBindings[index].CaseID == spec.ID {
+				binding = &contract.CellBindings[index]
+				break
+			}
+		}
+		if binding == nil || binding.CellID != spec.CellID || binding.ProofChoice != spec.ProofChoice || binding.IndicatorClass != spec.IndicatorClass {
+			return fmt.Errorf("case %s: index mapping does not match .gooo authority", spec.ID)
+		}
+	}
+	if len(seen) != 12 {
+		return fmt.Errorf("v2 case index must map all 12 authority cells")
+	}
+	for _, binding := range contract.CellBindings {
+		found := false
+		for _, spec := range index.Cases {
+			if spec.CellID == binding.CellID && spec.ID == binding.CaseID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("authority cell %s has no case-index evidence binding", binding.CellID)
+		}
+	}
+	return nil
 }
 
 func assertV2Case(spec V2CaseSpec, resolution V2Resolution) error {

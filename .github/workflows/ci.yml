@@ -27,6 +27,9 @@ jobs:
           cache: false
       - name: Bind exact subject identity
         run: test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+      - name: Start exact CI wall clock
+        shell: bash
+        run: date +%s%3N > "$RUNNER_TEMP/ci-start-ms"
       - name: Run semantic audit
         run: bash scripts/semantic-audit.sh
       - name: Compile packages
@@ -55,8 +58,18 @@ jobs:
           printf '%s\n' "$rss" > "$RUNNER_TEMP/test.rss"
       - name: Vet and formatting checks
         run: |
-          go vet ./...
-          test -z "$(gofmt -d $(git ls-files '*.go'))"
+          set +e
+          go vet ./... > "$RUNNER_TEMP/vet.log" 2>&1
+          vet_status=$?
+          cat "$RUNNER_TEMP/vet.log"
+          if [ "$vet_status" -ne 0 ]; then
+            exit "$vet_status"
+          fi
+          gofmt_diff="$(gofmt -d $(git ls-files '*.go'))"
+          if [ -n "$gofmt_diff" ]; then
+            printf '%s\n' "$gofmt_diff"
+            exit 1
+          fi
       - name: Seven-case conformance
         shell: bash
         run: |
@@ -108,6 +121,9 @@ jobs:
           mkdir -p "$evidence_dir/conformance"
           cp "$RUNNER_TEMP/conformance/conformance.json" "$evidence_dir/conformance/conformance.json"
           cp "$RUNNER_TEMP/conformance-v2/conformance-v2.json" "$evidence_dir/conformance/conformance-v2.json"
+          mkdir -p "$evidence_dir/conformance/v2"
+          cp "$RUNNER_TEMP/conformance-v2/conformance-v2.json" "$evidence_dir/conformance/v2/conformance-v2.json"
+          cp -R "$RUNNER_TEMP/conformance-v2/cases" "$evidence_dir/conformance/v2/cases"
           bash scripts/write-ci-evidence.sh "$SUBJECT_SHA" \
             "$(cat "$RUNNER_TEMP/compile.wall")" "$(cat "$RUNNER_TEMP/compile.rss")" \
             "$(cat "$RUNNER_TEMP/build.wall")" "$(cat "$RUNNER_TEMP/build.rss")" \
@@ -120,7 +136,9 @@ jobs:
             (.stages | to_entries | all(.value.wall_ms|type=="number" and floor==. and . >= 0)) and
             (.stages | to_entries | all(.value.peak_rss_kib|type=="number" and floor==. and . >= 0)) and
             .tests == {total:7,selected:7,executed:7,reused:0,failed:0,unknown:0} and
-            .local_executions == {test:0,build:0,vet:0,conformance:0,integration:0} and .repository_writes == 0
+            .local_executions == {test:0,build:0,vet:0,conformance:0,integration:0} and .repository_writes == 0 and
+            .improvement.state == "UNKNOWN" and .improvement.before == null and .improvement.after == null and
+            .improvement.reason == "EXACT_BEFORE_AFTER_IDENTITY_PAIR_NOT_AVAILABLE"
           ' "$evidence_dir/ci-evidence.json" >/dev/null
           jq -e '
             .schema == "gooo/semantic-meta-package-resolver/cases/v2" and
@@ -128,7 +146,44 @@ jobs:
             .cells == 12 and .meta_activities == 12 and
             .proof == {CLOSED:4,UNKNOWN:4,REFUTED:4} and .indicators == {CLOSED:4,UNKNOWN:4,REFUTED:4}
           ' "$evidence_dir/conformance/conformance-v2.json" >/dev/null
+          ci_end=$(date +%s%3N)
+          ci_start=$(cat "$RUNNER_TEMP/ci-start-ms")
+          ci_wall=$((ci_end-ci_start))
+          bash scripts/write-ci-evidence-v2.sh "$SUBJECT_SHA" "$ci_wall" \
+            "$(cat "$RUNNER_TEMP/compile.wall")" "$(cat "$RUNNER_TEMP/compile.rss")" \
+            "$(cat "$RUNNER_TEMP/build.wall")" "$(cat "$RUNNER_TEMP/build.rss")" \
+            "$(cat "$RUNNER_TEMP/test.wall")" "$(cat "$RUNNER_TEMP/test.rss")" \
+            "$(cat "$RUNNER_TEMP/conformance-v2.wall")" "$(cat "$RUNNER_TEMP/conformance-v2.rss")" \
+            "$(cat "$RUNNER_TEMP/integration.wall")" "$(cat "$RUNNER_TEMP/integration.rss")" \
+            "$evidence_dir/conformance/v2/conformance-v2.json" "$evidence_dir/ci-evidence-v2.json"
+          jq -e '
+            .schema == "gooo/semantic-meta-package-resolver/ci-evidence/v2" and
+            (.authority_contract_digest|test("^sha256:[0-9a-f]{64}$")) and
+            (.authority_mapping|length) == 12 and
+            ([.authority_mapping[] | select((.semantic_ir_digest|test("^sha256:[0-9a-f]{64}$")) and (.machine_dossier_digest|test("^sha256:[0-9a-f]{64}$")) and (.human_dossier_digest|test("^sha256:[0-9a-f]{64}$")) and (.artifact_manifest_digest|test("^sha256:[0-9a-f]{64}$")))]|length) == 12 and
+            ([.authority_mapping[] | {case_id,cell_id,proof_choice,indicator_class}] | sort_by(.case_id)) ==
+            ([
+              {case_id:"ambiguous-export-unknown",cell_id:"ambiguous_export",proof_choice:"FOUNDATION",indicator_class:"GUARDRAIL"},
+              {case_id:"dependency-cycle-refuted",cell_id:"dependency_cycle",proof_choice:"FOUNDATION",indicator_class:"DRIVER"},
+              {case_id:"deterministic-diamond-convergence-closed",cell_id:"diamond_convergence",proof_choice:"COHERENCE",indicator_class:"OUTCOME"},
+              {case_id:"explicit-fixed-point-merge-closed",cell_id:"fixed_point_merge",proof_choice:"FOUNDATION",indicator_class:"OUTCOME"},
+              {case_id:"forged-package-identity-refuted",cell_id:"forged_package_identity",proof_choice:"REGRESSION",indicator_class:"GUARDRAIL"},
+              {case_id:"missing-asset-digest-unknown",cell_id:"missing_asset_digest",proof_choice:"REGRESSION",indicator_class:"GUARDRAIL"},
+              {case_id:"missing-immutable-release-unknown",cell_id:"missing_immutable_release",proof_choice:"COHERENCE",indicator_class:"DRIVER"},
+              {case_id:"same-name-conflicting-digest-refuted",cell_id:"conflicting_digest",proof_choice:"REGRESSION",indicator_class:"DRIVER"},
+              {case_id:"same-name-same-digest-dedupe-closed",cell_id:"same_name_same_digest",proof_choice:"REGRESSION",indicator_class:"GUARDRAIL"},
+              {case_id:"semantic-export-conflict-refuted",cell_id:"semantic_export_conflict",proof_choice:"COHERENCE",indicator_class:"OUTCOME"},
+              {case_id:"toolchain-mismatch-unknown",cell_id:"toolchain_mismatch",proof_choice:"COHERENCE",indicator_class:"OUTCOME"},
+              {case_id:"exact-single-import-closed",cell_id:"exact_single",proof_choice:"FOUNDATION",indicator_class:"DRIVER"}
+            ] | sort_by(.case_id)) and
+            ([.metrics.build_ms,.metrics.test_ms,.metrics.wall_ms,.metrics.peak_rss_kib] | all(type=="number" and floor==. and . >= 0)) and
+            .metrics.cache_hits == null and .metrics.cache_misses == null and
+            .metrics.state == "UNKNOWN" and .metrics.unknown_reason == "CACHE_METRICS_UNMEASURABLE" and
+            .improvement == {value:null,state:"UNKNOWN",reason:"EXACT_BEFORE_AFTER_IDENTITY_PAIR_NOT_AVAILABLE",before:null,after:null} and
+            .runtime == {repository_writes:0,local_test_executions:0,cross_project_required_gates:0,contents_permission:"read",output_location:"caller-owned RUNNER_TEMP",failed_runs_preserved:true}
+          ' "$evidence_dir/ci-evidence-v2.json" >/dev/null
           cat "$evidence_dir/ci-evidence.json" >> "$GITHUB_STEP_SUMMARY"
+          cat "$evidence_dir/ci-evidence-v2.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Enforce zero repository writes
         run: test -z "$(git status --porcelain=v1 --untracked-files=all)"
       - name: Upload CI evidence

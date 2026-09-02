@@ -98,15 +98,23 @@ go run ./cmd/gooo-semantic-meta-package-resolver run \
 
 The v2 denominator is fixed at 12 cells/meta activities, proof 4/4/4,
 indicator 4/4/4, and 12 cases split into 4 CLOSED, 4 UNKNOWN, and 4 REFUTED.
-Only explicit `FIXED_POINT` merge is accepted. `REFUTED > UNKNOWN > CLOSED`;
-UNKNOWN always carries the six-field claim tuple. Cross-project CI status is
-not an import input or gate (`cross_project_required_gates=0`).
+The authoritative `.gooo` contract binds every case to one cell, activity,
+`proof_choice`, `indicator_class`, and release-evidence reference. That binding
+is copied into the linked semantic IR, machine dossier, human dossier, and CI
+case observation; no aggregate score or percentage is derived. Only explicit
+`FIXED_POINT` merge is accepted. `REFUTED > UNKNOWN > CLOSED`; UNKNOWN always
+carries the six-field claim tuple. Cross-project CI status is not an import
+input or gate (`cross_project_required_gates=0`).
 
 CI is the validation authority. It uses Go 1.27 and records exact integer
 wall-time/RSS measurements for compile, build, test, conformance, and
-integration. Local test/build/vet/conformance/integration execution counts are
-fixed at zero. No automatic commit, push, merge, or release authority is
-embedded in the resolver.
+integration, plus `build_ms`, `test_ms`, total `wall_ms`, and peak RSS in the
+v2 evidence dossier. Cache hit/miss counts are `null` with `UNKNOWN` when the
+runner cannot measure them; they are never represented as zero. Without an
+exact before/after identity pair, improvement is `null` with `UNKNOWN`. Local
+test/build/vet/conformance/integration execution counts are fixed at zero. No
+automatic commit, push, merge, or release authority is embedded in the
+resolver.
 
 ## Why semantic signatures are additional
 
@@ -126,6 +134,6 @@ boundary, not a signature-verification service. An optional public-release
 adapter may enrich a candidate, but adapter failure remains `UNKNOWN` and
 cannot close a graph.
 
-See [`docs/rfc-v1.md`](docs/rfc-v1.md), [`contracts/ci-evidence-v1.schema.json`](contracts/ci-evidence-v1.schema.json), and
+See [`docs/rfc-v1.md`](docs/rfc-v1.md), [`contracts/ci-evidence-v1.schema.json`](contracts/ci-evidence-v1.schema.json), [`contracts/ci-evidence-v2.schema.json`](contracts/ci-evidence-v2.schema.json), and
 [`docs/release.md`](docs/release.md) for the wire contracts and release
 procedure.

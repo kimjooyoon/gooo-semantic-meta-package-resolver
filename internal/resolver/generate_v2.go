@@ -19,6 +19,7 @@ type v2LinkedIR struct {
 	ContractDigest  string              `json:"contract_digest"`
 	ToolchainDigest string              `json:"toolchain_digest"`
 	MergeStrategy   string              `json:"merge_strategy"`
+	Cell            V2CellBinding       `json:"cell"`
 	Packages        []V2PackageManifest `json:"packages"`
 	Exports         []V2MergedExport    `json:"exports"`
 	Edges           []V2LinkEdge        `json:"edges"`
@@ -27,7 +28,7 @@ type v2LinkedIR struct {
 }
 
 func makeV2LinkedIR(resolution V2Resolution) (v2LinkedIR, error) {
-	ir := v2LinkedIR{Schema: V2IRSchema, Version: "v2", Root: resolution.Root, Status: resolution.Status, Claim: resolution.Claim, ContractDigest: resolution.ContractDigest, ToolchainDigest: resolution.ToolchainDigest, MergeStrategy: resolution.MergeStrategy, Packages: resolution.Packages, Exports: resolution.Exports, Edges: resolution.Edges, IdentityDigest: resolution.IdentityDigest}
+	ir := v2LinkedIR{Schema: V2IRSchema, Version: "v2", Root: resolution.Root, Status: resolution.Status, Claim: resolution.Claim, ContractDigest: resolution.ContractDigest, ToolchainDigest: resolution.ToolchainDigest, MergeStrategy: resolution.MergeStrategy, Cell: resolution.Cell, Packages: resolution.Packages, Exports: resolution.Exports, Edges: resolution.Edges, IdentityDigest: resolution.IdentityDigest}
 	digest, err := digestValue(struct {
 		Schema          string              `json:"schema"`
 		Version         string              `json:"version"`
@@ -37,11 +38,12 @@ func makeV2LinkedIR(resolution V2Resolution) (v2LinkedIR, error) {
 		ContractDigest  string              `json:"contract_digest"`
 		ToolchainDigest string              `json:"toolchain_digest"`
 		MergeStrategy   string              `json:"merge_strategy"`
+		Cell            V2CellBinding       `json:"cell"`
 		Packages        []V2PackageManifest `json:"packages"`
 		Exports         []V2MergedExport    `json:"exports"`
 		Edges           []V2LinkEdge        `json:"edges"`
 		IdentityDigest  string              `json:"identity_digest"`
-	}{ir.Schema, ir.Version, ir.Root, ir.Status, ir.Claim, ir.ContractDigest, ir.ToolchainDigest, ir.MergeStrategy, ir.Packages, ir.Exports, ir.Edges, ir.IdentityDigest})
+	}{ir.Schema, ir.Version, ir.Root, ir.Status, ir.Claim, ir.ContractDigest, ir.ToolchainDigest, ir.MergeStrategy, ir.Cell, ir.Packages, ir.Exports, ir.Edges, ir.IdentityDigest})
 	if err != nil {
 		return v2LinkedIR{}, err
 	}
@@ -72,6 +74,7 @@ func GenerateV2Artifacts(resolution V2Resolution) (V2Artifacts, error) {
 		"contract digest=" + resolution.ContractDigest,
 		"toolchain digest=" + resolution.ToolchainDigest,
 		"identity digest=" + resolution.IdentityDigest,
+		fmt.Sprintf("cell id=%s case_id=%s activity=%s proof_choice=%s indicator_class=%s evidence_ref=%s", resolution.Cell.CellID, resolution.Cell.CaseID, resolution.Cell.Activity, resolution.Cell.ProofChoice, resolution.Cell.IndicatorClass, resolution.Cell.EvidenceRef),
 	}
 	for _, pkg := range resolution.Packages {
 		linked = append(linked, fmt.Sprintf("package-manifest name=%s version=%s digest=%s repository=%s release_id=%s tag_object=%s tag_target=%s asset_id=%s asset_digest=%s package_semantic_id=%s symbols_digest=%s contract_digest=%s toolchain_digest=%s", pkg.Name, pkg.Version, pkg.Digest, pkg.RepositoryIdentity, pkg.ImmutableReleaseID, pkg.AnnotatedTagObject, pkg.AnnotatedTagTarget, pkg.AssetID, pkg.AssetDigest, pkg.PackageSemanticID, pkg.ExportedSymbolSetDigest, pkg.ContractDigest, pkg.GoToolchainDigest))
@@ -150,17 +153,21 @@ func v2MachineDossier(resolution V2Resolution) any {
 		ContractDigest  string              `json:"contract_digest"`
 		ToolchainDigest string              `json:"toolchain_digest"`
 		MergeStrategy   string              `json:"merge_strategy"`
+		Cell            V2CellBinding       `json:"cell"`
 		StateCounts     map[string]int      `json:"state_counts"`
 		Packages        []V2PackageManifest `json:"packages"`
 		Exports         []V2MergedExport    `json:"exports"`
 		Edges           []V2LinkEdge        `json:"edges"`
-	}{V2ArtifactSchema + "/machine-dossier", resolution.Status, resolution.Claim, resolution.IdentityDigest, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, counts, resolution.Packages, resolution.Exports, resolution.Edges}
+	}{V2ArtifactSchema + "/machine-dossier", resolution.Status, resolution.Claim, resolution.IdentityDigest, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, resolution.Cell, counts, resolution.Packages, resolution.Exports, resolution.Edges}
 }
 
 func generateV2HumanDossier(resolution V2Resolution) string {
 	var b strings.Builder
 	b.WriteString("# Gooo semantic import dossier v2\n\n")
 	fmt.Fprintf(&b, "status: %s\nroot: %s\nmerge_strategy: %s\ncontract_digest: %s\ntoolchain_digest: %s\nidentity_digest: %s\n\n", resolution.Status, resolution.Root, resolution.MergeStrategy, resolution.ContractDigest, resolution.ToolchainDigest, resolution.IdentityDigest)
+	b.WriteString("## Authority cell\n\n")
+	b.WriteString("| cell | case | activity | proof_choice | indicator_class | evidence_ref |\n|---|---|---|---|---|---|\n")
+	fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n", resolution.Cell.CellID, resolution.Cell.CaseID, resolution.Cell.Activity, resolution.Cell.ProofChoice, resolution.Cell.IndicatorClass, resolution.Cell.EvidenceRef)
 	b.WriteString("## Pinned package manifests\n\n")
 	b.WriteString("| package | version | package digest | release ID | asset digest | semantic ID | symbol set digest |\n|---|---|---|---|---|---|---|\n")
 	for _, pkg := range resolution.Packages {

@@ -15,6 +15,7 @@ operator_process_reason=direct post-merge push to main
 v0.1.0=tag-preserved|release-absent|failed-workflow-33484531613
 v0.1.1=tag-preserved|immutable-release-published
 v0.1.2=tag-preserved|release-id-380317048|immutable=true|asset-id-539217648|asset-digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee|target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1|tag-object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d
+v0.1.3=tag-preserved|release-id-381164402|immutable=true|asset-1-id-541014765|asset-1-digest=sha256:12202b2b4748668a92553ac1f5b986f022bfe6096bc1c4db085de315d1470a29|asset-2-id-541014774|asset-2-digest=sha256:3168c24d0ea7dc77e4df3c34e0deb0de303efb9876611595837ba773e1f26472|target=516182dcff8c2ba0b34a2d1a2a8577d817a8fceb
 v2_gate=cross_project_required_gates=0|pr-actions-authoritative|release-job-draft-first-only
 ```
 

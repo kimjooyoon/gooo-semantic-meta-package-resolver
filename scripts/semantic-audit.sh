@@ -10,6 +10,7 @@ search() {
 }
 test -s "$contract"
 test -s "$contract_v2"
+test -s "$root/contracts/ci-evidence-v2.schema.json"
 search '^grammar source_authority=' "$contract"
 search '^rule name=immutable_selection' "$contract"
 search '^rule name=no_registry_latestness' "$contract"
@@ -21,6 +22,14 @@ search '^unknown_fields fields=stage,step,reason,unknown_class,next_operation,bl
 search '^fixed_denominator id=semantic-import-v2 cells=12 meta_activities=12 proof=4/4/4 indicator=4/4/4 cases=12 closed=4 unknown=4 refuted=4' "$contract_v2"
 search '^merge strategy=FIXED_POINT' "$contract_v2"
 search '^gate name=cross_project_required_gates value=0' "$contract_v2"
+search '^rule name=cell_evidence_binding' "$contract_v2"
+cell_bindings=0
+if command -v rg >/dev/null 2>&1; then
+  cell_bindings=$(rg -c '^cell .* proof_choice=.* indicator_class=.* evidence_ref=' "$contract_v2")
+else
+  cell_bindings=$(grep -Ec '^cell .* proof_choice=.* indicator_class=.* evidence_ref=' "$contract_v2")
+fi
+test "$cell_bindings" = "12"
 search '^repository identity=github.com/kimjooyoon/gooo-semantic-meta-package-resolver' "$contract_v2"
 search '^release id=380317048' "$contract_v2"
 search '^tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1' "$contract_v2"
