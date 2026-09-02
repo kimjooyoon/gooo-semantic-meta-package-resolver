@@ -42,6 +42,9 @@ func makeV2LinkedIR(resolution V2Resolution) (v2LinkedIR, error) {
 		Edges           []V2LinkEdge        `json:"edges"`
 		IdentityDigest  string              `json:"identity_digest"`
 	}{ir.Schema, ir.Version, ir.Root, ir.Status, ir.Claim, ir.ContractDigest, ir.ToolchainDigest, ir.MergeStrategy, ir.Packages, ir.Exports, ir.Edges, ir.IdentityDigest})
+	if err != nil {
+		return v2LinkedIR{}, err
+	}
 	ir.IRDigest = digest
 	return ir, nil
 }
