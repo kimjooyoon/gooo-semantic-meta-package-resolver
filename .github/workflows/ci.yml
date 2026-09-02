@@ -58,7 +58,13 @@ jobs:
           printf '%s\n' "$rss" > "$RUNNER_TEMP/test.rss"
       - name: Vet and formatting checks
         run: |
-          go vet ./...
+          set +e
+          go vet ./... > "$RUNNER_TEMP/vet.log" 2>&1
+          vet_status=$?
+          cat "$RUNNER_TEMP/vet.log"
+          if [ "$vet_status" -ne 0 ]; then
+            exit "$vet_status"
+          fi
           gofmt_diff="$(gofmt -d $(git ls-files '*.go'))"
           if [ -n "$gofmt_diff" ]; then
             printf '%s\n' "$gofmt_diff"
