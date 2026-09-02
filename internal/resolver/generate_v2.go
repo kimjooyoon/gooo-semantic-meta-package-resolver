@@ -158,7 +158,7 @@ func v2MachineDossier(resolution V2Resolution) any {
 		Packages        []V2PackageManifest `json:"packages"`
 		Exports         []V2MergedExport    `json:"exports"`
 		Edges           []V2LinkEdge        `json:"edges"`
-		}{V2ArtifactSchema + "/machine-dossier", resolution.Status, resolution.Claim, resolution.IdentityDigest, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, resolution.Cell, counts, resolution.Packages, resolution.Exports, resolution.Edges}
+	}{V2ArtifactSchema + "/machine-dossier", resolution.Status, resolution.Claim, resolution.IdentityDigest, resolution.ContractDigest, resolution.ToolchainDigest, resolution.MergeStrategy, resolution.Cell, counts, resolution.Packages, resolution.Exports, resolution.Edges}
 }
 
 func generateV2HumanDossier(resolution V2Resolution) string {
