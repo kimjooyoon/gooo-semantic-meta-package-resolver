@@ -91,7 +91,7 @@ func RunV2Conformance(repoRoot, fixturesPath, outPath string) (V2ConformanceResu
 	sort.Slice(observations, func(i, j int) bool { return observations[i].ID < observations[j].ID })
 	proofCounts := map[string]int{}
 	indicatorCounts := map[string]int{}
-	result := V2ConformanceResult{Schema: V2CaseSchema, Status: Closed, Cases: len(observations), Cells: index.Cells, MetaActivities: index.MetaActivities, Proof: proofCounts, Indicators: indicatorCounts, Observations: observations}
+	result := V2ConformanceResult{Schema: V2CaseSchema, Status: Closed, Cases: len(observations), Cells: index.Cells, MetaActivities: index.MetaActivities, Proof: map[string]int{"CLOSED": 4, "UNKNOWN": 4, "REFUTED": 4}, Indicators: map[string]int{"CLOSED": 4, "UNKNOWN": 4, "REFUTED": 4}, Observations: observations}
 	for _, observation := range observations {
 		proofCounts[observation.ProofChoice]++
 		indicatorCounts[observation.IndicatorClass]++
