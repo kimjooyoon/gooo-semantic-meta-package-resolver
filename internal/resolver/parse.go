@@ -31,11 +31,11 @@ func ParseSource(path string) (Source, error) {
 		values, valueErr := parseKeyValues(fields[1:])
 		switch fields[0] {
 		case "gooo":
-			if len(fields) != 4 || fields[3] != "v1" {
+			if len(fields) != 4 || (fields[3] != "v1" && fields[3] != "v2") {
 				return Source{}, fmt.Errorf("line %d: invalid gooo header", lineNo)
 			}
 			source.Kind, source.Name, source.LanguageVersion = fields[1], fields[2], fields[3]
-			source.Schema = "gooo/" + fields[1] + "/source/v1"
+			source.Schema = "gooo/" + fields[1] + "/source/" + fields[3]
 		case "grammar":
 			if valueErr != nil || len(values) != 1 {
 				return Source{}, fmt.Errorf("line %d: invalid grammar: %w", lineNo, valueErr)
@@ -79,6 +79,38 @@ func ParseSource(path string) (Source, error) {
 			if err != nil {
 				return Source{}, fmt.Errorf("line %d: %w", lineNo, err)
 			}
+			if values["cells"] != "" {
+				source.FixedCells, err = strconv.Atoi(values["cells"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid cells", lineNo)
+				}
+			}
+			if values["meta_activities"] != "" {
+				source.FixedMetaActivities, err = strconv.Atoi(values["meta_activities"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid meta activities", lineNo)
+				}
+			}
+			source.ProofVector = values["proof"]
+			source.IndicatorVector = values["indicator"]
+			if values["closed"] != "" {
+				source.FixedClosed, err = strconv.Atoi(values["closed"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid closed count", lineNo)
+				}
+			}
+			if values["unknown"] != "" {
+				source.FixedUnknown, err = strconv.Atoi(values["unknown"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid unknown count", lineNo)
+				}
+			}
+			if values["refuted"] != "" {
+				source.FixedRefuted, err = strconv.Atoi(values["refuted"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid refuted count", lineNo)
+				}
+			}
 		case "precedence":
 			if valueErr != nil || values["states"] == "" {
 				return Source{}, fmt.Errorf("line %d: invalid precedence: %w", lineNo, valueErr)
@@ -89,6 +121,65 @@ func ParseSource(path string) (Source, error) {
 				return Source{}, fmt.Errorf("line %d: invalid unknown fields: %w", lineNo, valueErr)
 			}
 			source.UnknownFields = strings.Split(values["fields"], ",")
+		case "cell":
+			if valueErr != nil || values["name"] == "" || values["activity"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid cell: %w", lineNo, valueErr)
+			}
+			source.Cells = append(source.Cells, values["name"])
+			source.MetaActivities = append(source.MetaActivities, values["activity"])
+		case "merge":
+			if valueErr != nil || values["strategy"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid merge strategy: %w", lineNo, valueErr)
+			}
+			source.MergeStrategy = values["strategy"]
+		case "gate":
+			if valueErr != nil || values["name"] == "" || values["value"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid gate declaration: %w", lineNo, valueErr)
+			}
+			if values["name"] == "cross_project_required_gates" {
+				source.CrossProjectRequiredGates, err = strconv.Atoi(values["value"])
+				if err != nil {
+					return Source{}, fmt.Errorf("line %d: invalid cross-project gate count", lineNo)
+				}
+			}
+		case "repository":
+			if valueErr != nil || values["identity"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid repository identity: %w", lineNo, valueErr)
+			}
+			source.Identity.RepositoryIdentity = values["identity"]
+		case "release":
+			if valueErr != nil || values["id"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid immutable release identity: %w", lineNo, valueErr)
+			}
+			source.Identity.ImmutableReleaseID = values["id"]
+		case "tag":
+			if valueErr != nil || values["object"] == "" || values["target"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid annotated tag identity: %w", lineNo, valueErr)
+			}
+			source.Identity.AnnotatedTagObject = values["object"]
+			source.Identity.AnnotatedTagTarget = values["target"]
+		case "asset":
+			if valueErr != nil || values["id"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid release asset identity: %w", lineNo, valueErr)
+			}
+			source.Identity.AssetID = values["id"]
+			source.Identity.AssetDigest = values["digest"]
+		case "symbol_set":
+			if valueErr != nil || values["digest"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid exported symbol set digest: %w", lineNo, valueErr)
+			}
+			source.SymbolSetDigest = values["digest"]
+			source.Identity.ExportedSymbolSetDigest = values["digest"]
+		case "contract":
+			if valueErr != nil || values["digest"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid contract digest: %w", lineNo, valueErr)
+			}
+			source.Identity.ContractDigest = values["digest"]
+		case "toolchain":
+			if valueErr != nil || values["digest"] == "" {
+				return Source{}, fmt.Errorf("line %d: invalid Go toolchain digest: %w", lineNo, valueErr)
+			}
+			source.Identity.GoToolchainDigest = values["digest"]
 		case "package", "version", "semantic_id", "stage":
 			if valueErr != nil {
 				return Source{}, fmt.Errorf("line %d: invalid %s: %w", lineNo, fields[0], valueErr)
@@ -100,6 +191,7 @@ func ParseSource(path string) (Source, error) {
 				source.Version = values["value"]
 			case "semantic_id":
 				source.SemanticID = values["value"]
+				source.Identity.PackageSemanticID = values["value"]
 			case "stage":
 				source.Stage = values["value"]
 			}
@@ -217,7 +309,18 @@ func parseImport(values map[string]string) (ImportDecl, error) {
 	if values["package"] == "" || values["constraint"] == "" || values["semantic_id"] == "" || values["type"] == "" || values["stage"] == "" {
 		return ImportDecl{}, fmt.Errorf("import requires package, constraint, semantic_id, type, stage")
 	}
-	return ImportDecl{Package: values["package"], Constraint: values["constraint"], SemanticID: values["semantic_id"], Type: values["type"], Stage: values["stage"], Capabilities: parseRows(values["capability"]), Effects: parseRows(values["effect"]), Owner: values["owner"]}, nil
+	return ImportDecl{
+		Package: values["package"], PackageDigest: values["package_digest"], Constraint: values["constraint"],
+		SemanticID: values["semantic_id"], Type: values["type"], Stage: values["stage"],
+		Capabilities: parseRows(values["capability"]), Effects: parseRows(values["effect"]), Owner: values["owner"],
+		Identity: ImportIdentity{
+			RepositoryIdentity: values["repository"], ImmutableReleaseID: values["release_id"],
+			AnnotatedTagObject: values["tag_object"], AnnotatedTagTarget: values["tag_target"],
+			AssetID: values["asset_id"], AssetDigest: values["asset_digest"],
+			PackageSemanticID: values["package_semantic_id"], ExportedSymbolSetDigest: values["symbols_digest"],
+			ContractDigest: values["contract_digest"], GoToolchainDigest: values["toolchain_digest"],
+		},
+	}, nil
 }
 
 func LoadJSON(path string, target any) error {

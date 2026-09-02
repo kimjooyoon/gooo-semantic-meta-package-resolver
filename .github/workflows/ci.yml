@@ -67,6 +67,16 @@ jobs:
           read seconds rss < "$RUNNER_TEMP/conformance.measure"
           awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/conformance.wall"
           printf '%s\n' "$rss" > "$RUNNER_TEMP/conformance.rss"
+      - name: Twelve-case semantic import conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/conformance-v2"
+          mkdir -p "$evidence_dir"
+          /usr/bin/time -f '%e %M' -o "$RUNNER_TEMP/conformance-v2.measure" bash scripts/conformance-v2.sh "$evidence_dir"
+          read seconds rss < "$RUNNER_TEMP/conformance-v2.measure"
+          awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/conformance-v2.wall"
+          printf '%s\n' "$rss" > "$RUNNER_TEMP/conformance-v2.rss"
       - name: Linked artifact integration
         shell: bash
         run: |
@@ -80,6 +90,16 @@ jobs:
           awk '{printf "%d\n", $1*1000}' <<< "$seconds" > "$RUNNER_TEMP/integration.wall"
           printf '%s\n' "$rss" > "$RUNNER_TEMP/integration.rss"
           jq -e '.status == "CLOSED" and (.output_digest|test("^sha256:"))' "$out/execution.json" >/dev/null
+      - name: Linked semantic import integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/integration-v2"
+          go run ./cmd/gooo-semantic-meta-package-resolver run \
+            --source fixtures/v2/cases/exact-single.gooo --contract contracts/resolver-v2.gooo \
+            --catalog fixtures/v2/catalog.json --catalog-lock fixtures/v2/catalog.lock.json \
+            --out "$out" --execute
+          jq -e '.status == "CLOSED" and (.output_digest|test("^sha256:"))' "$out/execution.json" >/dev/null
       - name: Build exact CI evidence
         shell: bash
         run: |
@@ -87,6 +107,7 @@ jobs:
           evidence_dir="$RUNNER_TEMP/evidence"
           mkdir -p "$evidence_dir/conformance"
           cp "$RUNNER_TEMP/conformance/conformance.json" "$evidence_dir/conformance/conformance.json"
+          cp "$RUNNER_TEMP/conformance-v2/conformance-v2.json" "$evidence_dir/conformance/conformance-v2.json"
           bash scripts/write-ci-evidence.sh "$SUBJECT_SHA" \
             "$(cat "$RUNNER_TEMP/compile.wall")" "$(cat "$RUNNER_TEMP/compile.rss")" \
             "$(cat "$RUNNER_TEMP/build.wall")" "$(cat "$RUNNER_TEMP/build.rss")" \
@@ -101,6 +122,12 @@ jobs:
             .tests == {total:7,selected:7,executed:7,reused:0,failed:0,unknown:0} and
             .local_executions == {test:0,build:0,vet:0,conformance:0,integration:0} and .repository_writes == 0
           ' "$evidence_dir/ci-evidence.json" >/dev/null
+          jq -e '
+            .schema == "gooo/semantic-meta-package-resolver/cases/v2" and
+            .status == "CLOSED" and .cases == 12 and .closed == 4 and .unknown == 4 and .refuted == 4 and
+            .cells == 12 and .meta_activities == 12 and
+            .proof == {CLOSED:4,UNKNOWN:4,REFUTED:4} and .indicators == {CLOSED:4,UNKNOWN:4,REFUTED:4}
+          ' "$evidence_dir/conformance/conformance-v2.json" >/dev/null
           cat "$evidence_dir/ci-evidence.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Enforce zero repository writes
         run: test -z "$(git status --porcelain=v1 --untracked-files=all)"

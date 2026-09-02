@@ -1,0 +1,58 @@
+gooo contract semantic_meta_package_resolver v2
+
+# The .gooo declarations below are the semantic authority for the v2 import
+# boundary. Go implements only the parser, resolver, evaluator, and generator.
+grammar declaration=gooo|package|version|semantic_id|stage|origin|version_contract|export|import|immutable|selection|lock|repository|release|tag|asset|symbol_set|contract|toolchain|merge|cell|gate
+grammar identity=repository_identity|immutable_release_id|annotated_tag_object|annotated_tag_target|asset_id|asset_digest|package_semantic_id|exported_symbol_set_digest|contract_digest|go_toolchain_digest
+grammar export_merge=symbol|type|capability|effect|canonical|fixed_point
+grammar artifact=pinned-package-manifests.json|linked.gooo|linked-ir.json|linked-artifact.go|machine-dossier.json|human-dossier.md|resolution.json
+grammar source_authority=grammar|rule|type|capability|effect|origin|identity|merge|fixed_denominator|precedence|unknown_fields
+rule name=import_identity definition=repository_release_tag_asset_package_symbol_contract_toolchain_digest_tuple
+rule name=immutable_release definition=release_id_and_annotated_tag_object_target_are_required
+rule name=asset_binding definition=asset_id_and_sha256_digest_are_required
+rule name=pinned_manifest definition=import_graph_resolves_only_to_catalog_manifest_digest
+rule name=symbol_set_binding definition=exported_symbol_set_digest_covers_all_exports
+rule name=export_merge definition=merge_symbol_type_capability_effect_rows_before_linking
+rule name=fixed_point_merge definition=explicit_FIXED_POINT_only
+rule name=canonical_linked_ir definition=sort_identity_edges_and_exports_before_digest
+rule name=no_latestness definition=branch_latest_and_semver_strings_are_not_identity
+rule name=cross_project_gate definition=cross_project_required_gates_equals_zero
+type name=repository_identity definition=canonical_repository_qualified_name
+type name=immutable_release_id definition=public_release_numeric_id
+type name=annotated_tag definition=tag_object_sha_and_target_commit_sha
+type name=asset_identity definition=asset_numeric_id_and_sha256_digest
+type name=package_semantic_id definition=stable_qualified_identifier
+type name=exported_symbol_set_digest definition=sha256_canonical_sorted_export_set
+type name=contract_digest definition=sha256_authoritative_gooo_contract
+type name=go_toolchain_digest definition=sha256_go1_27_toolchain_descriptor
+type name=stage definition=source|lowered|linked|executed
+capability name=required row=import_declared_subset_of_export
+capability name=provided row=export_declared
+effect name=pure row=no_external_write
+effect name=io row=explicit_external_effect
+origin_rule name=ownership definition=owner_is_part_of_semantic_signature
+origin_rule name=release definition=release_identity_is_immutable_and_non_authoritative_latestness
+fixed_denominator id=semantic-import-v2 cells=12 meta_activities=12 proof=4/4/4 indicator=4/4/4 cases=12 closed=4 unknown=4 refuted=4
+precedence states=REFUTED>UNKNOWN>CLOSED
+unknown_fields fields=stage,step,reason,unknown_class,next_operation,blocked_by
+merge strategy=FIXED_POINT
+gate name=cross_project_required_gates value=0
+
+repository identity=github.com/kimjooyoon/gooo-semantic-meta-package-resolver
+release id=380317048 tag=v0.1.2
+tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1
+asset id=539217648 digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee name=release-v0.1.2.tar.gz
+toolchain digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde version=go1.27.x
+
+cell name=IMPORT_GRAPH activity=PARSE_GOOO_IMPORT_GRAPH
+cell name=REPOSITORY_IDENTITY activity=VERIFY_REPOSITORY_IDENTITY
+cell name=IMMUTABLE_RELEASE activity=VERIFY_IMMUTABLE_RELEASE_ID
+cell name=ANNOTATED_TAG activity=VERIFY_ANNOTATED_TAG_OBJECT_TARGET
+cell name=ASSET_DIGEST activity=VERIFY_RELEASE_ASSET_DIGEST
+cell name=PACKAGE_MANIFEST activity=PIN_PACKAGE_MANIFEST_DIGEST
+cell name=PACKAGE_SEMANTIC_ID activity=VERIFY_PACKAGE_SEMANTIC_ID
+cell name=SYMBOL_SET activity=VERIFY_EXPORTED_SYMBOL_SET_DIGEST
+cell name=CONTRACT_DIGEST activity=VERIFY_CONTRACT_DIGEST
+cell name=TOOLCHAIN_DIGEST activity=VERIFY_GO_TOOLCHAIN_DIGEST
+cell name=EXPORT_MERGE activity=MERGE_SYMBOL_TYPE_CAPABILITY_EFFECT_ROWS
+cell name=LINKED_IR_DOSSIER activity=EMIT_CANONICAL_LINKED_IR_MACHINE_HUMAN_DOSSIER

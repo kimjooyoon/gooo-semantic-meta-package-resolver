@@ -1,0 +1,15 @@
+gooo package forged v2
+package name=forged
+version value=1.0.0
+semantic_id value=forged.api
+stage value=stable
+origin owner=kimjooyoon/forged kind=first_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=forged.value semantic_id=forged.api type=Value stage=stable capability=read effect=pure optional=false
+repository identity=evil.example/forged
+release id=380317048
+tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1
+asset id=539217648 digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee
+symbol_set digest=sha256:d8484221ae5ae151ac37fc31195c1073647da6e6692f4210016180cc7d76d98d
+contract digest=sha256:bbc57a5577373d63e03ba58bd882b3862615955d761b6e57b3f2b7964d584706
+toolchain digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde

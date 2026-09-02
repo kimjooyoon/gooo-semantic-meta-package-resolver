@@ -1,0 +1,16 @@
+gooo package cycle-a v2
+package name=cycle-a
+version value=1.0.0
+semantic_id value=cycle-a.api
+stage value=stable
+origin owner=kimjooyoon/cycle kind=first_party
+version_contract major=1 minor=0 patch=0 compatibility=semantic-extension
+export id=cycle-a.value semantic_id=cycle-a.api type=Value stage=stable capability=read effect=pure optional=false
+import package=cycle-b constraint=1.0.0 semantic_id=cycle-b.api type=Value stage=stable capability=read effect=pure owner=kimjooyoon/cycle repository=github.com/kimjooyoon/gooo-semantic-meta-package-resolver release_id=380317048 tag_object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d tag_target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1 asset_id=539217648 asset_digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee package_semantic_id=cycle-b.api symbols_digest=sha256:1f23350848c339638f621b87c2852728c53a29039880ef6d0b442be490089ed6 contract_digest=sha256:bbc57a5577373d63e03ba58bd882b3862615955d761b6e57b3f2b7964d584706 toolchain_digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde
+repository identity=github.com/kimjooyoon/gooo-semantic-meta-package-resolver
+release id=380317048
+tag object=c250309bd20574b011e4ab9cf53a646e6fe0bf3d target=16db5f69d7b1a8ba6a0d9bb0d7e5fdb72e5ca5e1
+asset id=539217648 digest=sha256:4d01025815de1155458195359fd586729310475292f53911ae2103d332be86ee
+symbol_set digest=sha256:f01c2a3a225975c60d13f9627ca9b58689f7eef514e251ed2a831978e3aac92b
+contract digest=sha256:bbc57a5577373d63e03ba58bd882b3862615955d761b6e57b3f2b7964d584706
+toolchain digest=sha256:6c0f056a5d26dd8157e8d6f60404f35cf765a675e8bb37e56843418b6382adde

@@ -2,6 +2,7 @@
   "schema": "gooo/semantic-meta-package-resolver/authority/v1",
   "input": {"repository_writes": 0, "caller_owned_temp_output": true},
   "automatic": {"commit": 0, "push": 0, "merge": 0, "release": 0},
-  "local_executions": {"test": 0, "build": 0, "vet": 0, "conformance": 0, "integration": 0},
-  "ci_required": {"compile": 1, "build": 1, "test": 1, "conformance": 1, "integration": 1, "semantic_audit": 1}
+  "local_executions": {"test": 0, "build": 0, "vet": 0, "fmt": 0, "actionlint": 0, "bash_n": 0, "jq_assertion": 0, "generator": 0, "conformance": 0, "conformance_v2": 0, "integration": 0},
+  "ci_required": {"compile": 1, "build": 1, "test": 1, "conformance": 1, "conformance_v2": 1, "integration": 1, "semantic_audit": 1},
+  "cross_project_required_gates": 0
 }

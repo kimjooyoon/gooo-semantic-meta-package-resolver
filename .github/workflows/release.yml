@@ -44,15 +44,23 @@ jobs:
           go test ./...
           bash scripts/semantic-audit.sh
           bash scripts/conformance.sh "$RUNNER_TEMP/conformance"
+          bash scripts/conformance-v2.sh "$RUNNER_TEMP/conformance-v2"
           mkdir -p "$RUNNER_TEMP/bundle/conformance"
           cp "$RUNNER_TEMP/conformance/conformance.json" "$RUNNER_TEMP/bundle/conformance/conformance.json"
+          cp "$RUNNER_TEMP/conformance-v2/conformance-v2.json" "$RUNNER_TEMP/bundle/conformance/conformance-v2.json"
           cp contracts/ci-evidence-v1.schema.json "$RUNNER_TEMP/bundle/ci-evidence-v1.schema.json"
+          cp contracts/resolver-v2.gooo "$RUNNER_TEMP/bundle/resolver-v2.gooo"
+          cp fixtures/v2/catalog.lock.json "$RUNNER_TEMP/bundle/catalog-v2.lock.json"
           cp fixtures/catalog.lock.json "$RUNNER_TEMP/bundle/catalog.lock.json"
           cp "$RUNNER_TEMP/tag-object.sha" "$RUNNER_TEMP/bundle/tag-object.sha"
           go run ./cmd/gooo-semantic-meta-package-resolver run \
             --source fixtures/cases/exact-lock.gooo --contract contracts/resolver.gooo \
             --catalog fixtures/catalog.json --catalog-lock fixtures/catalog.lock.json \
             --out "$RUNNER_TEMP/bundle/integration" --execute
+          go run ./cmd/gooo-semantic-meta-package-resolver run \
+            --source fixtures/v2/cases/exact-single.gooo --contract contracts/resolver-v2.gooo \
+            --catalog fixtures/v2/catalog.json --catalog-lock fixtures/v2/catalog.lock.json \
+            --out "$RUNNER_TEMP/bundle/integration-v2" --execute
           printf 'tag=%s\ntarget_commit=%s\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" > "$RUNNER_TEMP/bundle/release-metadata.txt"
           tar -C "$RUNNER_TEMP/bundle" -czf "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz" .
           sha256sum "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz" | awk '{print $1}' > "$RUNNER_TEMP/release-${GITHUB_REF_NAME}.tar.gz.sha256"
