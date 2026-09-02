@@ -10,17 +10,17 @@
   "indicator_unknown": 4,
   "indicator_refuted": 4,
   "cases": [
-    {"id":"exact-single-import-closed","source":"fixtures/v2/cases/exact-single.gooo","expected":"CLOSED","assertion":"exact_single"},
-    {"id":"deterministic-diamond-convergence-closed","source":"fixtures/v2/cases/diamond-convergence.gooo","expected":"CLOSED","assertion":"diamond"},
-    {"id":"same-name-same-digest-dedupe-closed","source":"fixtures/v2/cases/same-name-same-digest.gooo","expected":"CLOSED","assertion":"dedupe"},
-    {"id":"explicit-fixed-point-merge-closed","source":"fixtures/v2/cases/fixed-point-merge.gooo","expected":"CLOSED","assertion":"fixed_point"},
-    {"id":"missing-immutable-release-unknown","source":"fixtures/v2/cases/missing-immutable-release.gooo","expected":"UNKNOWN","assertion":"missing_release"},
-    {"id":"missing-asset-digest-unknown","source":"fixtures/v2/cases/missing-asset-digest.gooo","expected":"UNKNOWN","assertion":"missing_asset"},
-    {"id":"ambiguous-export-unknown","source":"fixtures/v2/cases/ambiguous-export.gooo","expected":"UNKNOWN","assertion":"ambiguous_export"},
-    {"id":"toolchain-mismatch-unknown","source":"fixtures/v2/cases/toolchain-mismatch.gooo","expected":"UNKNOWN","assertion":"toolchain_mismatch"},
-    {"id":"same-name-conflicting-digest-refuted","source":"fixtures/v2/cases/conflicting-digest.gooo","expected":"REFUTED","assertion":"conflicting_digest"},
-    {"id":"dependency-cycle-refuted","source":"fixtures/v2/cases/dependency-cycle.gooo","expected":"REFUTED","assertion":"dependency_cycle"},
-    {"id":"forged-package-identity-refuted","source":"fixtures/v2/cases/forged-package-identity.gooo","expected":"REFUTED","assertion":"forged_identity"},
-    {"id":"semantic-export-conflict-refuted","source":"fixtures/v2/cases/semantic-export-conflict.gooo","expected":"REFUTED","assertion":"semantic_export"}
+    {"id":"exact-single-import-closed","source":"fixtures/v2/cases/exact-single.gooo","expected":"CLOSED","assertion":"exact_single","cell_id":"exact_single","proof_choice":"FOUNDATION","indicator_class":"DRIVER"},
+    {"id":"deterministic-diamond-convergence-closed","source":"fixtures/v2/cases/diamond-convergence.gooo","expected":"CLOSED","assertion":"diamond","cell_id":"diamond_convergence","proof_choice":"COHERENCE","indicator_class":"OUTCOME"},
+    {"id":"same-name-same-digest-dedupe-closed","source":"fixtures/v2/cases/same-name-same-digest.gooo","expected":"CLOSED","assertion":"dedupe","cell_id":"same_name_same_digest","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"},
+    {"id":"explicit-fixed-point-merge-closed","source":"fixtures/v2/cases/fixed-point-merge.gooo","expected":"CLOSED","assertion":"fixed_point","cell_id":"fixed_point_merge","proof_choice":"FOUNDATION","indicator_class":"OUTCOME"},
+    {"id":"missing-immutable-release-unknown","source":"fixtures/v2/cases/missing-immutable-release.gooo","expected":"UNKNOWN","assertion":"missing_release","cell_id":"missing_immutable_release","proof_choice":"COHERENCE","indicator_class":"DRIVER"},
+    {"id":"missing-asset-digest-unknown","source":"fixtures/v2/cases/missing-asset-digest.gooo","expected":"UNKNOWN","assertion":"missing_asset","cell_id":"missing_asset_digest","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"},
+    {"id":"ambiguous-export-unknown","source":"fixtures/v2/cases/ambiguous-export.gooo","expected":"UNKNOWN","assertion":"ambiguous_export","cell_id":"ambiguous_export","proof_choice":"FOUNDATION","indicator_class":"GUARDRAIL"},
+    {"id":"toolchain-mismatch-unknown","source":"fixtures/v2/cases/toolchain-mismatch.gooo","expected":"UNKNOWN","assertion":"toolchain_mismatch","cell_id":"toolchain_mismatch","proof_choice":"COHERENCE","indicator_class":"OUTCOME"},
+    {"id":"same-name-conflicting-digest-refuted","source":"fixtures/v2/cases/conflicting-digest.gooo","expected":"REFUTED","assertion":"conflicting_digest","cell_id":"conflicting_digest","proof_choice":"REGRESSION","indicator_class":"DRIVER"},
+    {"id":"dependency-cycle-refuted","source":"fixtures/v2/cases/dependency-cycle.gooo","expected":"REFUTED","assertion":"dependency_cycle","cell_id":"dependency_cycle","proof_choice":"FOUNDATION","indicator_class":"DRIVER"},
+    {"id":"forged-package-identity-refuted","source":"fixtures/v2/cases/forged-package-identity.gooo","expected":"REFUTED","assertion":"forged_identity","cell_id":"forged_package_identity","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"},
+    {"id":"semantic-export-conflict-refuted","source":"fixtures/v2/cases/semantic-export-conflict.gooo","expected":"REFUTED","assertion":"semantic_export","cell_id":"semantic_export_conflict","proof_choice":"COHERENCE","indicator_class":"OUTCOME"}
   ]
 }

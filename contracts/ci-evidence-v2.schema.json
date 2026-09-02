@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gooo/semantic-meta-package-resolver/ci-evidence/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "subject_sha", "authority_mapping", "authority_contract_digest", "stages", "metrics", "tests", "runtime", "improvement"],
+  "properties": {
+    "schema": {"const": "gooo/semantic-meta-package-resolver/ci-evidence/v2"},
+    "subject_sha": {"type": "string", "pattern": "^[0-9a-f]{40,}$"},
+    "authority_contract_digest": {"$ref": "#/$defs/sha256"},
+    "authority_mapping": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/cell_evidence"}
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compile", "build", "test", "conformance", "integration"],
+      "properties": {
+        "compile": {"$ref": "#/$defs/stage"},
+        "build": {"$ref": "#/$defs/stage"},
+        "test": {"$ref": "#/$defs/stage"},
+        "conformance": {"$ref": "#/$defs/stage"},
+        "integration": {"$ref": "#/$defs/stage"}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build_ms", "test_ms", "wall_ms", "peak_rss_kib", "cache_hits", "cache_misses", "state", "unknown_reason"],
+      "properties": {
+        "build_ms": {"type": "integer", "minimum": 0},
+        "test_ms": {"type": "integer", "minimum": 0},
+        "wall_ms": {"type": "integer", "minimum": 0},
+        "peak_rss_kib": {"type": "integer", "minimum": 0},
+        "cache_hits": {"type": ["integer", "null"], "minimum": 0},
+        "cache_misses": {"type": ["integer", "null"], "minimum": 0},
+        "state": {"enum": ["CLOSED", "UNKNOWN"]},
+        "unknown_reason": {"type": ["string", "null"]}
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_total", "package_executed", "package_failed", "semantic_import_cases"],
+      "properties": {
+        "package_total": {"type": "integer", "minimum": 0},
+        "package_executed": {"type": "integer", "minimum": 0},
+        "package_failed": {"type": "integer", "minimum": 0},
+        "semantic_import_cases": {"const": 12}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository_writes", "local_test_executions", "cross_project_required_gates", "contents_permission", "output_location", "failed_runs_preserved"],
+      "properties": {
+        "repository_writes": {"const": 0},
+        "local_test_executions": {"const": 0},
+        "cross_project_required_gates": {"const": 0},
+        "contents_permission": {"const": "read"},
+        "output_location": {"const": "caller-owned RUNNER_TEMP"},
+        "failed_runs_preserved": {"const": true}
+      }
+    },
+    "improvement": {"$ref": "#/$defs/improvement"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "cell_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "cell_id", "activity", "proof_choice", "indicator_class", "evidence_ref", "semantic_ir_digest", "machine_dossier_digest", "human_dossier_digest", "artifact_manifest_digest"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "cell_id": {"type": "string", "minLength": 1},
+        "activity": {"type": "string", "minLength": 1},
+        "proof_choice": {"enum": ["FOUNDATION", "COHERENCE", "REGRESSION"]},
+        "indicator_class": {"enum": ["DRIVER", "OUTCOME", "GUARDRAIL"]},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "semantic_ir_digest": {"$ref": "#/$defs/sha256"},
+        "machine_dossier_digest": {"$ref": "#/$defs/sha256"},
+        "human_dossier_digest": {"$ref": "#/$defs/sha256"},
+        "artifact_manifest_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wall_ms", "peak_rss_kib"],
+      "properties": {
+        "wall_ms": {"type": "integer", "minimum": 0},
+        "peak_rss_kib": {"type": "integer", "minimum": 0}
+      }
+    },
+    "improvement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "state", "reason", "before", "after"],
+      "properties": {
+        "value": {"type": "null"},
+        "state": {"const": "UNKNOWN"},
+        "reason": {"const": "EXACT_BEFORE_AFTER_IDENTITY_PAIR_NOT_AVAILABLE"},
+        "before": {"type": "null"},
+        "after": {"type": "null"}
+      }
+    }
+  }
+}

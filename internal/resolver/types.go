@@ -154,6 +154,7 @@ type Source struct {
 	UnknownFields             []string        `json:"unknown_fields"`
 	Cells                     []string        `json:"cells"`
 	MetaActivities            []string        `json:"meta_activities"`
+	CellBindings              []V2CellBinding `json:"cell_bindings"`
 	FixedCells                int             `json:"fixed_cells"`
 	FixedMetaActivities       int             `json:"fixed_meta_activities"`
 	FixedClosed               int             `json:"fixed_closed"`
@@ -354,12 +355,26 @@ type V2Resolution struct {
 	ToolchainDigest string              `json:"toolchain_digest"`
 	SourceDigest    string              `json:"source_digest"`
 	MergeStrategy   string              `json:"merge_strategy"`
+	Cell            V2CellBinding       `json:"cell"`
 	Packages        []V2PackageManifest `json:"packages"`
 	Exports         []V2MergedExport    `json:"exports"`
 	Edges           []V2LinkEdge        `json:"edges"`
 	Decisions       []Claim             `json:"decisions"`
 	IdentityDigest  string              `json:"identity_digest"`
 	LinkedIRDigest  string              `json:"linked_ir_digest"`
+}
+
+// V2CellBinding is the authority-owned identity for one fixed conformance
+// cell. The same binding is carried into the semantic IR, both dossiers, and
+// the CI observation so a state vector cannot be detached from its proof and
+// indicator coordinates.
+type V2CellBinding struct {
+	CellID         string `json:"cell_id"`
+	CaseID         string `json:"case_id"`
+	Activity       string `json:"activity"`
+	ProofChoice    string `json:"proof_choice"`
+	IndicatorClass string `json:"indicator_class"`
+	EvidenceRef    string `json:"evidence_ref"`
 }
 
 type V2Artifacts struct {
@@ -376,10 +391,13 @@ type V2Artifacts struct {
 }
 
 type V2CaseSpec struct {
-	ID        string `json:"id"`
-	Source    string `json:"source"`
-	Expected  Status `json:"expected"`
-	Assertion string `json:"assertion"`
+	ID             string `json:"id"`
+	Source         string `json:"source"`
+	Expected       Status `json:"expected"`
+	Assertion      string `json:"assertion"`
+	CellID         string `json:"cell_id"`
+	ProofChoice    string `json:"proof_choice"`
+	IndicatorClass string `json:"indicator_class"`
 }
 
 type V2CaseIndex struct {
@@ -411,14 +429,23 @@ type V2ConformanceResult struct {
 }
 
 type V2CaseObservation struct {
-	ID             string `json:"id"`
-	Expected       Status `json:"expected"`
-	Observed       Status `json:"observed"`
-	Assertion      string `json:"assertion"`
-	Claim          Claim  `json:"claim"`
-	IdentityDigest string `json:"identity_digest"`
-	LinkedIRDigest string `json:"linked_ir_digest"`
-	Deterministic  bool   `json:"deterministic"`
+	ID                     string `json:"id"`
+	Expected               Status `json:"expected"`
+	Observed               Status `json:"observed"`
+	Assertion              string `json:"assertion"`
+	CellID                 string `json:"cell_id"`
+	Activity               string `json:"activity"`
+	ProofChoice            string `json:"proof_choice"`
+	IndicatorClass         string `json:"indicator_class"`
+	EvidenceRef            string `json:"evidence_ref"`
+	Claim                  Claim  `json:"claim"`
+	IdentityDigest         string `json:"identity_digest"`
+	LinkedIRDigest         string `json:"linked_ir_digest"`
+	SemanticIRDigest       string `json:"semantic_ir_digest"`
+	MachineDossierDigest   string `json:"machine_dossier_digest"`
+	HumanDossierDigest     string `json:"human_dossier_digest"`
+	ArtifactManifestDigest string `json:"artifact_manifest_digest"`
+	Deterministic          bool   `json:"deterministic"`
 }
 
 type CaseSpec struct {

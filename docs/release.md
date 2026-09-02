@@ -23,6 +23,15 @@ artifacts, release metadata, and SHA-256 sidecar. The release job validates the
 annotated tag object and target commit before creating a draft. A public tag or
 release collision fails closed.
 
+The v2 CI evidence is fetched from the successful `main` CI run for the exact
+tag target before packaging. `ci-evidence-v2.json` contains all 12 case/cell
+bindings and their semantic-IR, machine-dossier, human-dossier, and artifact
+manifest digests. It also contains integer `build_ms`, `test_ms`, `wall_ms`,
+and `peak_rss_kib` measurements. Cache hit/miss fields remain `null` and the
+metrics claim remains `UNKNOWN` when the runner cannot observe cache events.
+Improvement is `UNKNOWN` with a null value until an exact before/after identity
+pair is available.
+
 The v0.1.2 release is preserved as the v2 identity anchor:
 
 ```text
