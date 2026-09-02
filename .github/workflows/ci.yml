@@ -59,7 +59,11 @@ jobs:
       - name: Vet and formatting checks
         run: |
           go vet ./...
-          test -z "$(gofmt -d $(git ls-files '*.go'))"
+          gofmt_diff="$(gofmt -d $(git ls-files '*.go'))"
+          if [ -n "$gofmt_diff" ]; then
+            printf '%s\n' "$gofmt_diff"
+            exit 1
+          fi
       - name: Seven-case conformance
         shell: bash
         run: |
