@@ -7,7 +7,7 @@ mkdir -p "$out"
 go run ./cmd/gooo-semantic-meta-package-resolver conformance-v2 \
   --root "$root" \
   --fixtures "$root/fixtures" \
-  --out "$out" >/dev/null
+  --out "$out"
 jq -e '
   .schema == "gooo/semantic-meta-package-resolver/cases/v2" and
   .status == "CLOSED" and .cases == 12 and .closed == 4 and .unknown == 4 and .refuted == 4 and
