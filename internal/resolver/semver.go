@@ -65,7 +65,16 @@ func satisfies(version, constraint string) bool {
 		if err != nil {
 			return false
 		}
-		return candidate.major == base.major && compareSemver(candidate, base) >= 0
+		if compareSemver(candidate, base) < 0 {
+			return false
+		}
+		if base.major > 0 {
+			return candidate.major == base.major
+		}
+		if base.minor > 0 {
+			return candidate.major == 0 && candidate.minor == base.minor
+		}
+		return candidate.major == 0 && candidate.minor == 0 && candidate.patch == base.patch
 	}
 	if strings.HasPrefix(constraint, "~") {
 		base, err := parsePartialVersion(strings.TrimPrefix(constraint, "~"))
