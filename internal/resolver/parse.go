@@ -1,8 +1,8 @@
 package resolver
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
