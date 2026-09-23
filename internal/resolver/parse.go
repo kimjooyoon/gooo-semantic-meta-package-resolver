@@ -16,6 +16,7 @@ func ParseSource(path string) (Source, error) {
 		return Source{}, err
 	}
 	source := Source{SourceDigest: digestBytes(data), LanguageVersion: "v1"}
+	seenHeader := false
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	lineNo := 0
 	for scanner.Scan() {
@@ -31,11 +32,15 @@ func ParseSource(path string) (Source, error) {
 		values, valueErr := parseKeyValues(fields[1:])
 		switch fields[0] {
 		case "gooo":
+			if seenHeader {
+				return Source{}, fmt.Errorf("line %d: duplicate gooo header", lineNo)
+			}
 			if len(fields) != 4 || (fields[3] != "v1" && fields[3] != "v2") {
 				return Source{}, fmt.Errorf("line %d: invalid gooo header", lineNo)
 			}
 			source.Kind, source.Name, source.LanguageVersion = fields[1], fields[2], fields[3]
 			source.Schema = "gooo/" + fields[1] + "/source/" + fields[3]
+			seenHeader = true
 		case "grammar":
 			if valueErr != nil || len(values) != 1 {
 				return Source{}, fmt.Errorf("line %d: invalid grammar: %w", lineNo, valueErr)
@@ -263,7 +268,7 @@ func ParseSource(path string) (Source, error) {
 	if err := scanner.Err(); err != nil {
 		return Source{}, err
 	}
-	if source.Kind == "" || source.Name == "" {
+	if !seenHeader || source.Kind == "" || source.Name == "" {
 		return Source{}, fmt.Errorf("source is missing a gooo header")
 	}
 	return source, nil
