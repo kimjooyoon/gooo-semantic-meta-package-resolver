@@ -23,6 +23,17 @@ func TestUnknownClaimIsComplete(t *testing.T) {
 	}
 }
 
+func TestUnknownClaimRejectsEmptyBlockers(t *testing.T) {
+	base := Claim{State: Unknown, Stage: "STAGE", Step: "STEP", Reason: "REASON", UnknownClass: "CLASS", NextOperation: "NEXT"}
+	for _, blockers := range [][]string{nil, {}, {""}, {"  "}} {
+		claim := base
+		claim.BlockedBy = blockers
+		if claim.Valid() {
+			t.Fatalf("unknown claim accepted empty blockers: %#v", blockers)
+		}
+	}
+}
+
 func TestPrecedence(t *testing.T) {
 	status, claim := finalClaim([]Claim{
 		unknownClaim("A", "B", "C", "D", "E", "unknown"),

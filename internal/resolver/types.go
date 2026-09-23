@@ -1,6 +1,9 @@
 package resolver
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 const (
 	ContractSchema     = "gooo/semantic-meta-package-resolver/contract/v1"
@@ -56,7 +59,15 @@ func unknownClaim(stage, step, reason, class, next string, blockedBy ...string) 
 
 func (c Claim) Valid() bool {
 	if c.State == Unknown {
-		return c.Stage != "" && c.Step != "" && c.Reason != "" && c.UnknownClass != "" && c.NextOperation != "" && c.BlockedBy != nil
+		if c.Stage == "" || c.Step == "" || c.Reason == "" || c.UnknownClass == "" || c.NextOperation == "" || len(c.BlockedBy) == 0 {
+			return false
+		}
+		for _, blocker := range c.BlockedBy {
+			if strings.TrimSpace(blocker) == "" {
+				return false
+			}
+		}
+		return true
 	}
 	return c.State == Closed || c.State == Refuted
 }
