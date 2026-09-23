@@ -20,7 +20,7 @@ func ParseSource(path string) (Source, error) {
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
-		line := strings.TrimSpace(strings.SplitN(scanner.Text(), "#", 2)[0])
+		line := strings.TrimSpace(stripComment(scanner.Text()))
 		if line == "" {
 			continue
 		}
@@ -267,6 +267,34 @@ func ParseSource(path string) (Source, error) {
 		return Source{}, fmt.Errorf("source is missing a gooo header")
 	}
 	return source, nil
+}
+
+func stripComment(line string) string {
+	var quote byte
+	escaped := false
+	for index := 0; index < len(line); index++ {
+		character := line[index]
+		if escaped {
+			escaped = false
+			continue
+		}
+		if quote != 0 {
+			if character == '\\' {
+				escaped = true
+			} else if character == quote {
+				quote = 0
+			}
+			continue
+		}
+		if character == '\'' || character == '"' {
+			quote = character
+			continue
+		}
+		if character == '#' {
+			return line[:index]
+		}
+	}
+	return line
 }
 
 func parseKeyValues(fields []string) (map[string]string, error) {
