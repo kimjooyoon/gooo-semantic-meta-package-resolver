@@ -27,3 +27,14 @@ func TestParseSourceRejectsDuplicateHeaders(t *testing.T) {
 		t.Fatal("expected duplicate gooo header to be rejected")
 	}
 }
+
+func TestParseSourceRejectsDuplicatePackageMetadata(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "source.gooo")
+	data := "gooo contract semantic_meta_package_resolver v1\npackage name=first\npackage name=second\n"
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseSource(path); err == nil {
+		t.Fatal("expected duplicate package metadata to be rejected")
+	}
+}

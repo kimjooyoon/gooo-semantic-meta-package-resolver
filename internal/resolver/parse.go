@@ -19,6 +19,14 @@ func ParseSource(path string) (Source, error) {
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	lineNo := 0
 	headerSeen := false
+	seenPackageMetadata := map[string]bool{}
+	markPackageMetadata := func(kind string) error {
+		if seenPackageMetadata[kind] {
+			return fmt.Errorf("line %d: duplicate %s declaration", lineNo, kind)
+		}
+		seenPackageMetadata[kind] = true
+		return nil
+	}
 	for scanner.Scan() {
 		lineNo++
 		line := strings.TrimSpace(strings.SplitN(scanner.Text(), "#", 2)[0])
@@ -192,6 +200,9 @@ func ParseSource(path string) (Source, error) {
 			}
 			source.Identity.GoToolchainDigest = values["digest"]
 		case "package", "version", "semantic_id", "stage":
+			if err := markPackageMetadata(fields[0]); err != nil {
+				return Source{}, err
+			}
 			if valueErr != nil {
 				return Source{}, fmt.Errorf("line %d: invalid %s: %w", lineNo, fields[0], valueErr)
 			}
