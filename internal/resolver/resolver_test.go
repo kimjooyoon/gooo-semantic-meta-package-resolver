@@ -32,3 +32,13 @@ func TestPrecedence(t *testing.T) {
 		t.Fatalf("precedence was not REFUTED > UNKNOWN: %s %+v", status, claim)
 	}
 }
+
+func TestParseKeyValuesRejectsDuplicateKeys(t *testing.T) {
+	if _, err := parseKeyValues([]string{"name=first", "name=second"}); err == nil {
+		t.Fatal("duplicate key accepted")
+	}
+	values, err := parseKeyValues([]string{"name=first", "kind=consumer"})
+	if err != nil || values["name"] != "first" || values["kind"] != "consumer" {
+		t.Fatalf("valid key/value fields rejected: values=%v err=%v", values, err)
+	}
+}
