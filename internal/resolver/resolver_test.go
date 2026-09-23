@@ -32,3 +32,25 @@ func TestPrecedence(t *testing.T) {
 		t.Fatalf("precedence was not REFUTED > UNKNOWN: %s %+v", status, claim)
 	}
 }
+
+func TestCaretConstraintsRespectZeroMajorSemver(t *testing.T) {
+	tests := []struct {
+		name       string
+		version    string
+		constraint string
+		want       bool
+	}{
+		{name: "zero-minor-inside", version: "0.2.9", constraint: "^0.2.3", want: true},
+		{name: "zero-minor-upper-bound", version: "0.3.0", constraint: "^0.2.3", want: false},
+		{name: "zero-minor-wide-version", version: "0.99.0", constraint: "^0.2.3", want: false},
+		{name: "zero-patch-inside", version: "0.0.3", constraint: "^0.0.3", want: true},
+		{name: "zero-patch-upper-bound", version: "0.0.4", constraint: "^0.0.3", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := satisfies(tt.version, tt.constraint); got != tt.want {
+				t.Fatalf("satisfies(%q, %q)=%v want %v", tt.version, tt.constraint, got, tt.want)
+			}
+		})
+	}
+}
