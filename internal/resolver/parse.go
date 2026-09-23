@@ -1,9 +1,11 @@
 package resolver
 
 import (
+	"bytes"
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -337,8 +339,17 @@ func LoadJSON(path string, target any) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, target); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
 		return fmt.Errorf("decode %s: %w", filepath.Base(path), err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("decode %s: trailing JSON value", filepath.Base(path))
+		}
+		return fmt.Errorf("decode %s: trailing data: %w", filepath.Base(path), err)
 	}
 	return nil
 }
